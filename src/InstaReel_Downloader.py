@@ -2,7 +2,6 @@ import os
 import tkinter as tk
 from tkinter import ttk, scrolledtext, filedialog, messagebox, simpledialog
 from instaloader import Instaloader, Post
-import tempfile
 import re
 from pathlib import Path
 
