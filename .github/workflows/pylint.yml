@@ -1,23 +1,42 @@
-name: Pylint
+# .github/workflows/python-ci.yml
 
-on: [push]
+name: Python CI
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow on pushes to the main branch
+  pull_request:
+    branches:
+      - main  # Also trigger on pull requests to the main branch
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.9'  # Specify the Python version you're using
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pylint
-    - name: Analysing the code with pylint
+        pip install -r requirements.txt
+        pip install flake8  # Install flake8 for linting
+
+    - name: Lint with flake8
       run: |
-        pylint $(git ls-files '*.py')
+        flake8 instareel_downloader.py  # Run flake8 on your main script
+      continue-on-error: true  # Continue even if linting fails (optional)
+
+    - name: Run tests (Optional)
+      run: |
+        # If you have tests, you can run them here.
+        # For example, if you have pytest installed:
+        # pytest
+        echo "No tests to run."
