@@ -17,7 +17,7 @@
         <li>Cross-platform support (Windows, macOS, Linux).</li>
     </ul>
 
-![Interface](https://github.com/screenshots/Interface.png)
+![Interface](screenshots)
 
    <h2>Installation</h2>
 
