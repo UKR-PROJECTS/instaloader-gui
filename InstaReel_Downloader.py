@@ -12,10 +12,12 @@ class VideoDownloaderApp:
         self.root = root
         self.root.title("InstaReel Downloader Pro")
         self.root.geometry("800x550")
-        self.root.iconbitmap('favicon.ico')  # Ensure favicon.ico exists in the same directory
+        self.root.iconbitmap(
+            "favicon.ico"
+        )  # Ensure favicon.ico exists in the same directory
 
         self.style = ttk.Style()
-        self.style.theme_use('clam')
+        self.style.theme_use("clam")
         self.configure_styles()
 
         self.setup_ui()
@@ -28,14 +30,20 @@ class VideoDownloaderApp:
         self.download_caption = True
 
     def configure_styles(self):
-        self.style.configure('TFrame', background='#F0F0F0')
-        self.style.configure('TLabel', background='#F0F0F0', foreground='#333333', font=('Segoe UI', 9))
-        self.style.configure('TButton', font=('Segoe UI', 9), relief='flat')
-        self.style.map('TButton',
-                      foreground=[('active', '#FFFFFF'), ('!active', '#FFFFFF')],
-                      background=[('active', '#45a049'), ('!active', '#4CAF50')])
-        self.style.configure('Header.TLabel', font=('Segoe UI', 14, 'bold'), foreground='#2c3e50')
-        self.style.configure('Status.TFrame', background='#FFFFFF')
+        self.style.configure("TFrame", background="#F0F0F0")
+        self.style.configure(
+            "TLabel", background="#F0F0F0", foreground="#333333", font=("Segoe UI", 9)
+        )
+        self.style.configure("TButton", font=("Segoe UI", 9), relief="flat")
+        self.style.map(
+            "TButton",
+            foreground=[("active", "#FFFFFF"), ("!active", "#FFFFFF")],
+            background=[("active", "#45a049"), ("!active", "#4CAF50")],
+        )
+        self.style.configure(
+            "Header.TLabel", font=("Segoe UI", 14, "bold"), foreground="#2c3e50"
+        )
+        self.style.configure("Status.TFrame", background="#FFFFFF")
 
     def setup_ui(self):
         main_frame = ttk.Frame(self.root, padding=20)
@@ -44,13 +52,17 @@ class VideoDownloaderApp:
         # Header
         header_frame = ttk.Frame(main_frame)
         header_frame.pack(fill=tk.X, pady=(0, 20))
-        ttk.Label(header_frame, text="InstaReel Downloader Pro", style='Header.TLabel').pack(side=tk.LEFT)
+        ttk.Label(
+            header_frame, text="InstaReel Downloader Pro", style="Header.TLabel"
+        ).pack(side=tk.LEFT)
 
         # URL Section
         url_frame = ttk.Frame(main_frame)
         url_frame.pack(fill=tk.X, pady=5)
-        ttk.Label(url_frame, text="Instagram Reel URL:").pack(side=tk.LEFT, padx=(0, 10))
-        self.url_entry = ttk.Entry(url_frame, width=50, font=('Segoe UI', 10))
+        ttk.Label(url_frame, text="Instagram Reel URL:").pack(
+            side=tk.LEFT, padx=(0, 10)
+        )
+        self.url_entry = ttk.Entry(url_frame, width=50, font=("Segoe UI", 10))
         self.url_entry.pack(side=tk.LEFT, expand=True, fill=tk.X)
 
         # Options Frame
@@ -60,25 +72,41 @@ class VideoDownloaderApp:
         self.download_image_var = tk.BooleanVar(value=True)
         self.download_caption_var = tk.BooleanVar(value=True)
 
-        ttk.Checkbutton(options_frame, text="Download Thumbnail", variable=self.download_image_var).pack(side=tk.LEFT, padx=10)
-        ttk.Checkbutton(options_frame, text="Download Caption", variable=self.download_caption_var).pack(side=tk.LEFT, padx=10)
+        ttk.Checkbutton(
+            options_frame, text="Download Thumbnail", variable=self.download_image_var
+        ).pack(side=tk.LEFT, padx=10)
+        ttk.Checkbutton(
+            options_frame, text="Download Caption", variable=self.download_caption_var
+        ).pack(side=tk.LEFT, padx=10)
 
         # Button Frame
         button_frame = ttk.Frame(main_frame)
         button_frame.pack(fill=tk.X, pady=10)
 
-        ttk.Button(button_frame, text="Choose Save Folder", command=self.choose_directory).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Download Reel", command=self.process_video).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(
+            button_frame, text="Choose Save Folder", command=self.choose_directory
+        ).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Download Reel", command=self.process_video).pack(
+            side=tk.RIGHT, padx=5
+        )
 
         # Status Frame
-        status_frame = ttk.Frame(main_frame, style='Status.TFrame')
+        status_frame = ttk.Frame(main_frame, style="Status.TFrame")
         status_frame.pack(fill=tk.BOTH, expand=True, pady=10)
 
-        self.status_text = scrolledtext.ScrolledText(status_frame, wrap=tk.WORD, height=8,
-                                                    font=('Consolas', 9), bg='#FFFFFF', bd=0)
+        self.status_text = scrolledtext.ScrolledText(
+            status_frame,
+            wrap=tk.WORD,
+            height=8,
+            font=("Consolas", 9),
+            bg="#FFFFFF",
+            bd=0,
+        )
         self.status_text.pack(fill=tk.BOTH, expand=True)
 
-        self.progress = ttk.Progressbar(status_frame, mode='indeterminate', style='TProgressbar')
+        self.progress = ttk.Progressbar(
+            status_frame, mode="indeterminate", style="TProgressbar"
+        )
 
     def choose_directory(self):
         directory = filedialog.askdirectory()
@@ -121,7 +149,7 @@ class VideoDownloaderApp:
             self.progress.pack_forget()
 
     def download_video(self, url):
-        if 'instagram.com' in url:
+        if "instagram.com" in url:
             return self.download_instagram_video(url)
         else:
             raise Exception("Unsupported platform")
