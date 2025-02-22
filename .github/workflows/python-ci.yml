@@ -31,7 +31,7 @@ jobs:
 
     - name: Lint with flake8
       run: |
-        flake8 instareel_downloader.py  # Run flake8 on your main script
+        flake8 src.instareel_downloader.py  # Run flake8 on your main script
       continue-on-error: true  # Continue even if linting fails (optional)
 
     - name: Run tests (Optional)
