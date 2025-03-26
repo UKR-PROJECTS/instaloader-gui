@@ -1,6 +1,6 @@
 # InstaReelDownloader v1.0.0
 
-![Active](https://img.shields.io/badge/status-active-47c219.svg)
+[![Status](https://img.shields.io/badge/status-active-47c219.svg)](#) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 <p align="center">
     <img src="favicon.png" width="300" height="300" alt="Icon" />
