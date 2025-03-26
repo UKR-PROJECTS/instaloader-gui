@@ -1,4 +1,4 @@
-# InstaReelDownloader
+# InstaReelDownloader v1.0.0
 
 ![Active](https://img.shields.io/badge/status-active-47c219.svg)
 
