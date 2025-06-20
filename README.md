@@ -76,7 +76,7 @@ pip install -r requirements.txt
 > If you prefer manual setup:
 >
 > ```bash
-> pip install PyQt6 instaloader moviepy openai-whisper requests pillow
+> pip install PyQt6 instaloader moviepy==1.0.3 openai-whisper requests pillow
 > ```
 
 ---
