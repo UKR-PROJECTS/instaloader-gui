@@ -3,7 +3,7 @@
 [![Status](https://img.shields.io/badge/status-active-47c219.svg)](#) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 <p align="center">
-    <img src="src/favicon.ico" alt="Icon" width="80" height="80" />
+    <img src="src/favicon.ico" alt="Instagram-Media-Downloader Icon" width="80" height="80" />
 </p>
 
 **Instagram-Media-Downloader** is a Python-based desktop application built with PyQt6 that enables users to download Instagram Reels along with their video, thumbnails, captions, and optional audio transcription.
