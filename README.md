@@ -72,7 +72,7 @@ Instagram-Media-Downloader/
 > If `requirements.txt` is missing, manually install:
 >
 > ```bash
-> pip install PyQt6 instaloader moviepy openai-whisper requests pillow
+> pip install PyQt6 instaloader moviepy==1.0.3 openai-whisper requests pillow
 > ```
 
 ## 💻 Usage
