@@ -114,10 +114,8 @@ To create a standalone Windows executable (`.exe`) using **PyInstaller**, follow
    pyinstaller \
        --onefile \
        --windowed \
-       --name InstagramMediaDownloader \
+       --name Instagram-Media-Downloader \
        --icon src/favicon.ico \
-       --add-data "screenshots/Interface.png;screenshots" \
-       --add-data "src/favicon.ico;." \
        src/main.py
    ```
 
