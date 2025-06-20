@@ -1,9 +1,9 @@
-# Instagram-Media-Downloader v1.0.0
+# Instagram-Media-Downloader v2.0.0
 
 [![Status](https://img.shields.io/badge/status-active-47c219.svg)](#) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 <p align="center">
-    <img src="favicon.png" width="300" height="300" alt="Icon" />
+    <img src="src/favicon.ico" alt="Icon" />
 </p>
 
  <p><strong>Instagram-Media-Downloader</strong> is a Python-based desktop application that allows users to download Instagram Reels along with their captions and thumbnails.</p>
@@ -39,7 +39,7 @@
             <pre><code>pip install -r requirements.txt</code></pre>
         </li>
         <li>Run the application:
-            <pre><code>python instareel_downloader.py</code></pre>
+            <pre><code>python src/main.py</code></pre>
         </li>
     </ol>
 

@@ -1,2 +1,27 @@
-instaloader
-flake8
+# Instagram Media Downloader Dependencies
+# Core GUI Framework
+PyQt6>=6.4.0
+
+# Instagram downloading
+instaloader>=4.9.6
+
+# Video/Audio processing
+moviepy==1.0.3
+
+# AI Transcription
+openai-whisper>=20231117
+
+# Image processing
+Pillow>=9.5.0
+
+# HTTP requests
+requests>=2.28.0
+
+# Additional dependencies for whisper
+torch>=1.13.0
+torchaudio>=0.13.0
+numpy>=1.21.0
+scipy>=1.9.0
+
+# Optional: For better performance
+ffmpeg-python>=0.2.0
