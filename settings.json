@@ -1,7 +1,7 @@
 {
-  "video": false,
-  "thumbnail": false,
-  "audio": false,
-  "caption": false,
-  "transcribe": false
+  "video": true,
+  "thumbnail": true,
+  "audio": true,
+  "caption": true,
+  "transcribe": true
 }

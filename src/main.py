@@ -1,6 +1,35 @@
 """
+Instagram Media Downloader - Professional Instagram Reel Downloader
+==============================================
+
 Instagram Media Downloader with Queue Management
 A professional PyQt6 application for downloading Instagram Reels with transcription
+
+Author: Ujjwal Nova
+Version: 2.0.0
+License: MIT
+
+Features:
+- Download Instagram Reels as .mp4 files.
+- Extract and save video thumbnails as .jpg files.
+- Save captions as .txt files.
+- Extract audio tracks as .mp3 files.
+- Optional transcription of audio to text using OpenAI Whisper.
+- Responsive, user-friendly GUI built with PyQt6.
+- Session-based organization: downloads are grouped by timestamped session folders.
+- Queue management for batch downloads with real-time progress.
+
+Dependencies:
+- PyQt6: GUI framework
+- instaloader: Instagram Media Downloader Engine
+- moviepy==1.0.3: Extracting mp3
+- openai-whisper: Reel Transcription
+- Pillow: Image Processing
+
+Usage:
+    python src/main.py
+
+Repository: https://github.com/UKR-PROJECTS/Instagram-Media-Downloader
 """
 
 import sys
@@ -15,6 +44,7 @@ from urllib.parse import urlparse
 import traceback
 from datetime import datetime
 
+# PyQt6 imports
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QTextEdit, QProgressBar,
@@ -30,7 +60,7 @@ from PyQt6.QtGui import (
     QBrush, QLinearGradient
 )
 
-# Third-party imports
+# Third-party imports with error handling
 try:
     import instaloader
     from moviepy.editor import VideoFileClip
@@ -39,11 +69,28 @@ try:
     from PIL import Image
 except ImportError as e:
     print(f"Missing required packages. Please install: {e}")
+    print("Run: pip install instaloader moviepy whisper requests pillow")
     sys.exit(1)
+
 
 @dataclass
 class ReelItem:
-    """Data class for reel download items"""
+    """
+    Data class for reel download items
+
+    Attributes:
+        url: Instagram reel URL
+        title: Display title for the reel
+        status: Current download status
+        progress: Download progress percentage
+        thumbnail_path: Path to saved thumbnail
+        video_path: Path to saved video file
+        audio_path: Path to extracted audio
+        caption: Reel caption text
+        transcript: Audio transcription
+        error_message: Error details if download fails
+        folder_path: Path to reel's download folder
+    """
     url: str
     title: str = ""
     status: str = "Pending"
@@ -56,15 +103,23 @@ class ReelItem:
     error_message: str = ""
     folder_path: str = ""
 
+
 class ModernButton(QPushButton):
+    """Custom styled button with modern gradient design"""
+
     def __init__(self, text="", parent=None):
         super().__init__(text, parent)
-        self.setStyleSheet(self._style())
+        self._setup_button()
+
+    def _setup_button(self):
+        """Initialize button styling and properties"""
+        self.setStyleSheet(self._get_button_style())
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setMinimumHeight(30)
         self.setFont(QFont("Arial", 9))
 
-    def _style(self):
+    def _get_button_style(self):
+        """Return modern button stylesheet"""
         return """
         QPushButton {
             background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #667eea, stop:1 #764ba2);
@@ -72,17 +127,36 @@ class ModernButton(QPushButton):
             color: white;
             padding: 8px 16px;
             font-size: 11px;
+            font-weight: bold;
         }
-        QPushButton:hover { opacity: 0.9; }
-        QPushButton:pressed { opacity: 0.8; }
-        QPushButton:disabled { background: #bdc3c7; color: #7f8c8d; }
+        QPushButton:hover { 
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #5a6fd8, stop:1 #6a4190);
+        }
+        QPushButton:pressed { 
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #4e63c6, stop:1 #58377e);
+        }
+        QPushButton:disabled { 
+            background: #bdc3c7; 
+            color: #7f8c8d; 
+        }
         """
 
+
 class ModernProgressBar(QProgressBar):
+    """Custom styled progress bar with modern design"""
+
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._setup_progress_bar()
+
+    def _setup_progress_bar(self):
+        """Initialize progress bar styling"""
         self.setMinimumHeight(20)
-        self.setStyleSheet("""
+        self.setStyleSheet(self._get_progress_style())
+
+    def _get_progress_style(self):
+        """Return modern progress bar stylesheet"""
+        return """
         QProgressBar {
             border: 1px solid #ecf0f1;
             border-radius: 10px;
@@ -90,247 +164,353 @@ class ModernProgressBar(QProgressBar):
             background-color: #f8f9fa;
             font-size: 10px;
             color: #2c3e50;
+            font-weight: bold;
         }
         QProgressBar::chunk {
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #667eea, stop:1 #764ba2);
             border-radius: 8px;
             margin: 1px;
         }
-        """)
+        """
+
 
 class ReelDownloader(QThread):
-    """Thread for downloading Instagram reels"""
+    """
+    Background thread for downloading Instagram reels
 
+    Signals:
+        progress_updated: Emitted when download progress changes
+        download_completed: Emitted when a download finishes successfully
+        error_occurred: Emitted when an error occurs during download
+    """
+
+    # Signal definitions
     progress_updated = pyqtSignal(str, int, str)  # url, progress, status
     download_completed = pyqtSignal(str, dict)  # url, result_data
     error_occurred = pyqtSignal(str, str)  # url, error_message
 
     def __init__(self, reel_items: List[ReelItem], download_options: Dict[str, bool]):
+        """
+        Initialize downloader thread
+
+        Args:
+            reel_items: List of reels to download
+            download_options: Dictionary of download preferences
+        """
         super().__init__()
         self.reel_items = reel_items
         self.download_options = download_options
         self.is_running = True
+        self.whisper_model = None
+        self.session_folder = None
 
     def run(self):
         """Main download thread execution"""
         try:
-            # Create session folder
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            self.session_folder = Path("downloads") / f"session_{timestamp}"
-            self.session_folder.mkdir(parents=True, exist_ok=True)
-
-            # Load Whisper model if transcription is enabled
-            if self.download_options.get('transcribe', False):
-                self.progress_updated.emit("", 0, "Loading Whisper model...")
-                self.whisper_model = whisper.load_model("base")
-
-            # Create instaloader instance
-            loader = instaloader.Instaloader(
-                download_video_thumbnails=True,
-                download_comments=False,
-                save_metadata=False,
-                compress_json=False,
-                dirname_pattern=str(self.session_folder)
-            )
-
-            for i, item in enumerate(self.reel_items):
-                if not self.is_running:
-                    break
-
-                try:
-                    self.progress_updated.emit(item.url, 0, "Starting download...")
-                    result = self._download_reel(loader, item, i + 1)
-                    self.download_completed.emit(item.url, result)
-
-                except Exception as e:
-                    error_msg = f"Download failed: {str(e)}"
-                    self.error_occurred.emit(item.url, error_msg)
+            self._setup_session()
+            self._load_whisper_model()
+            self._setup_instaloader()
+            self._process_downloads()
 
         except Exception as e:
             self.error_occurred.emit("", f"Thread error: {str(e)}")
 
-    def _download_reel(self, loader: instaloader.Instaloader, item: ReelItem, reel_number: int) -> Dict[str, Any]:
-        """Download individual reel and process it"""
+    def _setup_session(self):
+        """Create timestamped session folder for downloads"""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.session_folder = Path("downloads") / f"session_{timestamp}"
+        self.session_folder.mkdir(parents=True, exist_ok=True)
+
+    def _load_whisper_model(self):
+        """Load Whisper model if transcription is enabled"""
+        if self.download_options.get('transcribe', False):
+            self.progress_updated.emit("", 0, "Loading Whisper model...")
+            try:
+                self.whisper_model = whisper.load_model("base")
+            except Exception as e:
+                print(f"Failed to load Whisper model: {e}")
+                self.whisper_model = None
+
+    def _setup_instaloader(self):
+        """Initialize Instaloader with optimal settings"""
+        self.loader = instaloader.Instaloader(
+            download_video_thumbnails=True,
+            download_comments=False,
+            save_metadata=False,
+            compress_json=False,
+            dirname_pattern=str(self.session_folder)
+        )
+
+    def _process_downloads(self):
+        """Process all downloads in the queue"""
+        for i, item in enumerate(self.reel_items, 1):
+            if not self.is_running:
+                break
+
+            try:
+                self.progress_updated.emit(item.url, 0, "Starting download...")
+                result = self._download_reel(item, i)
+                self.download_completed.emit(item.url, result)
+
+            except Exception as e:
+                error_msg = f"Download failed: {str(e)}"
+                self.error_occurred.emit(item.url, error_msg)
+
+    def _download_reel(self, item: ReelItem, reel_number: int) -> Dict[str, Any]:
+        """
+        Download individual reel and process it
+
+        Args:
+            item: ReelItem to download
+            reel_number: Sequential number for file naming
+
+        Returns:
+            Dictionary containing paths to downloaded files
+        """
         result = {}
         temp_video_path = None
 
         try:
-            # Extract shortcode from URL
+            # Validate URL and extract shortcode
             shortcode = self._extract_shortcode(item.url)
             if not shortcode:
                 raise ValueError("Invalid Instagram URL")
 
             self.progress_updated.emit(item.url, 10, "Fetching reel data...")
 
-            # Get post
-            post = instaloader.Post.from_shortcode(loader.context, shortcode)
+            # Get Instagram post
+            post = instaloader.Post.from_shortcode(self.loader.context, shortcode)
 
-            # Create reel folder
+            # Create individual reel folder
             reel_folder = self.session_folder / f"reel{reel_number}"
             reel_folder.mkdir(exist_ok=True)
             result['folder_path'] = str(reel_folder)
 
-            # Check if we need video for audio extraction or transcription
-            need_video_for_audio = (self.download_options.get('audio', False) or
-                                    self.download_options.get('transcribe', False))
+            # Process downloads based on user options
+            self._download_video(post, reel_folder, reel_number, result)
+            self._download_thumbnail(post, reel_folder, reel_number, result)
+            self._extract_audio(reel_folder, reel_number, result)
+            self._save_caption(post, reel_folder, reel_number, result)
+            self._transcribe_audio(reel_folder, reel_number, result)
 
-            # Download video (either permanently or temporarily)
-            if self.download_options.get('video', True) or need_video_for_audio:
-                self.progress_updated.emit(item.url, 20, "Downloading video...")
+            result['title'] = f"Reel {reel_number}"
+            self.progress_updated.emit(item.url, 100, "Completed")
+
+        except Exception as e:
+            raise Exception(f"Download error: {str(e)}")
+
+        finally:
+            # Cleanup temporary files
+            if temp_video_path and os.path.exists(str(temp_video_path)):
+                self._safe_file_removal(str(temp_video_path))
+
+        return result
+
+    def _download_video(self, post, reel_folder: Path, reel_number: int, result: Dict):
+        """Download video file if enabled"""
+        need_video_for_audio = (self.download_options.get('audio', False) or
+                                self.download_options.get('transcribe', False))
+
+        if self.download_options.get('video', True) or need_video_for_audio:
+            self.progress_updated.emit("", 20, "Downloading video...")
+
+            video_path = reel_folder / f"video{reel_number}.mp4"
+
+            try:
+                response = requests.get(post.video_url, stream=True, timeout=30)
+                response.raise_for_status()
+
+                with open(video_path, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
 
                 if self.download_options.get('video', True):
-                    # Permanent video download
-                    video_path = reel_folder / f"video{reel_number}.mp4"
-                    with open(video_path, 'wb') as f:
-                        f.write(requests.get(post.video_url).content)
                     result['video_path'] = str(video_path)
-                else:
-                    # Temporary video download for audio extraction
-                    temp_video_path = reel_folder / f"temp_video{reel_number}.mp4"
-                    with open(temp_video_path, 'wb') as f:
-                        f.write(requests.get(post.video_url).content)
 
-            self.progress_updated.emit(item.url, 40, "Downloading thumbnail...")
+            except Exception as e:
+                raise Exception(f"Video download failed: {str(e)}")
 
-            # Download thumbnail
-            if self.download_options.get('thumbnail', True):
-                thumb_path = reel_folder / f"thumbnail{reel_number}.jpg"
+    def _download_thumbnail(self, post, reel_folder: Path, reel_number: int, result: Dict):
+        """Download thumbnail image if enabled"""
+        if self.download_options.get('thumbnail', True):
+            self.progress_updated.emit("", 40, "Downloading thumbnail...")
+
+            thumb_path = reel_folder / f"thumbnail{reel_number}.jpg"
+
+            try:
+                response = requests.get(post.display_url, timeout=30)
+                response.raise_for_status()
+
                 with open(thumb_path, 'wb') as f:
-                    # Fixed: Use display_url instead of url for thumbnail
-                    f.write(requests.get(post.display_url).content)
+                    f.write(response.content)
+
                 result['thumbnail_path'] = str(thumb_path)
 
-            self.progress_updated.emit(item.url, 60, "Extracting audio...")
+            except Exception as e:
+                print(f"Thumbnail download failed: {e}")
 
-            # Extract audio
-            if self.download_options.get('audio', True):
-                audio_path = reel_folder / f"audio{reel_number}.mp3"
-                video_clip = None
-                audio_clip = None
-                try:
-                    # Use either permanent video or temp video
-                    video_source = result.get('video_path') or str(temp_video_path)
+    def _extract_audio(self, reel_folder: Path, reel_number: int, result: Dict):
+        """Extract audio from video if enabled"""
+        if not self.download_options.get('audio', True):
+            return
 
-                    if video_source and os.path.exists(video_source):
-                        video_clip = VideoFileClip(video_source)
-                        if video_clip.audio is not None:
-                            audio_clip = video_clip.audio
-                            audio_clip.write_audiofile(str(audio_path), verbose=False, logger=None)
-                            result['audio_path'] = str(audio_path)
-                except Exception as e:
-                    print(f"Audio extraction failed: {e}")
-                finally:
-                    # Proper resource cleanup
-                    if audio_clip:
-                        try:
-                            audio_clip.close()
-                        except:
-                            pass
-                    if video_clip:
-                        try:
-                            video_clip.close()
-                        except:
-                            pass
+        self.progress_updated.emit("", 60, "Extracting audio...")
 
-            self.progress_updated.emit(item.url, 80, "Getting caption...")
+        video_path = result.get('video_path') or str(reel_folder / f"video{reel_number}.mp4")
 
-            # Get caption and save to file
-            if self.download_options.get('caption', True):
-                caption_text = post.caption or "No caption available"
-                result['caption'] = caption_text
+        if not os.path.exists(video_path):
+            return
 
-                caption_path = reel_folder / f"caption{reel_number}.txt"
+        audio_path = reel_folder / f"audio{reel_number}.mp3"
+        video_clip = None
+        audio_clip = None
+
+        try:
+            video_clip = VideoFileClip(video_path)
+            if video_clip.audio is not None:
+                audio_clip = video_clip.audio
+                audio_clip.write_audiofile(str(audio_path), verbose=False, logger=None)
+                result['audio_path'] = str(audio_path)
+
+        except Exception as e:
+            print(f"Audio extraction failed: {e}")
+
+        finally:
+            # Ensure proper cleanup of video resources
+            self._cleanup_video_resources(audio_clip, video_clip)
+
+    def _save_caption(self, post, reel_folder: Path, reel_number: int, result: Dict):
+        """Save caption text if enabled"""
+        if self.download_options.get('caption', True):
+            self.progress_updated.emit("", 80, "Getting caption...")
+
+            caption_text = post.caption or "No caption available"
+            result['caption'] = caption_text
+
+            caption_path = reel_folder / f"caption{reel_number}.txt"
+
+            try:
                 with open(caption_path, 'w', encoding='utf-8') as f:
                     f.write(caption_text)
                 result['caption_path'] = str(caption_path)
 
-            self.progress_updated.emit(item.url, 90, "Transcribing audio...")
+            except Exception as e:
+                print(f"Caption save failed: {e}")
 
-            # Transcribe audio and save to file
-            if (self.download_options.get('transcribe', False) and self.whisper_model):
-                video_clip = None
-                audio_clip = None
-                temp_audio_path = None
-                try:
-                    # Use audio file if available, otherwise extract from video temporarily
-                    audio_source = result.get('audio_path')
+    def _transcribe_audio(self, reel_folder: Path, reel_number: int, result: Dict):
+        """Transcribe audio using Whisper if enabled"""
+        if not (self.download_options.get('transcribe', False) and self.whisper_model):
+            return
 
-                    if not audio_source:
-                        # Extract audio temporarily for transcription
-                        temp_audio_path = reel_folder / f"temp_audio{reel_number}.mp3"
-                        video_source = result.get('video_path') or str(temp_video_path)
+        self.progress_updated.emit("", 90, "Transcribing audio...")
 
-                        if video_source and os.path.exists(video_source):
-                            video_clip = VideoFileClip(video_source)
-                            if video_clip.audio is not None:
-                                audio_clip = video_clip.audio
-                                audio_clip.write_audiofile(str(temp_audio_path), verbose=False, logger=None)
-                                audio_source = str(temp_audio_path)
+        # Use existing audio file or extract temporarily
+        audio_source = result.get('audio_path')
+        temp_audio_path = None
 
-                    if audio_source and os.path.exists(audio_source):
-                        transcript_result = self.whisper_model.transcribe(audio_source)
-                        transcript_text = transcript_result['text']
-                        result['transcript'] = transcript_text
+        if not audio_source:
+            audio_source, temp_audio_path = self._extract_temp_audio(reel_folder, reel_number, result)
 
-                        transcript_path = reel_folder / f"transcript{reel_number}.txt"
-                        with open(transcript_path, 'w', encoding='utf-8') as f:
-                            f.write(transcript_text)
-                        result['transcript_path'] = str(transcript_path)
+        if not (audio_source and os.path.exists(audio_source)):
+            return
 
-                except Exception as e:
-                    result['transcript'] = f"Transcription failed: {str(e)}"
-                finally:
-                    # Proper resource cleanup
-                    if audio_clip:
-                        try:
-                            audio_clip.close()
-                        except:
-                            pass
-                    if video_clip:
-                        try:
-                            video_clip.close()
-                        except:
-                            pass
-                    # Clean up temporary audio file if it was created
-                    if temp_audio_path and os.path.exists(str(temp_audio_path)):
-                        try:
-                            os.remove(str(temp_audio_path))
-                        except OSError:
-                            pass
+        try:
+            transcript_result = self.whisper_model.transcribe(audio_source)
+            transcript_text = transcript_result['text']
+            result['transcript'] = transcript_text
 
-            self.progress_updated.emit(item.url, 100, "Completed")
-            result['title'] = f"Reel {reel_number}"
+            transcript_path = reel_folder / f"transcript{reel_number}.txt"
+            with open(transcript_path, 'w', encoding='utf-8') as f:
+                f.write(transcript_text)
+            result['transcript_path'] = str(transcript_path)
 
         except Exception as e:
-            raise Exception(f"Download error: {str(e)}")
-        finally:
-            # Clean up temporary video file if it was created
-            if temp_video_path and os.path.exists(str(temp_video_path)):
-                try:
-                    os.remove(str(temp_video_path))
-                except OSError:
-                    pass
+            result['transcript'] = f"Transcription failed: {str(e)}"
 
-        return result
+        finally:
+            # Cleanup temporary audio file
+            if temp_audio_path and os.path.exists(temp_audio_path):
+                self._safe_file_removal(temp_audio_path)
+
+    def _extract_temp_audio(self, reel_folder: Path, reel_number: int, result: Dict):
+        """Extract audio temporarily for transcription"""
+        video_path = result.get('video_path') or str(reel_folder / f"video{reel_number}.mp4")
+        temp_audio_path = str(reel_folder / f"temp_audio{reel_number}.mp3")
+
+        if not os.path.exists(video_path):
+            return None, None
+
+        video_clip = None
+        audio_clip = None
+
+        try:
+            video_clip = VideoFileClip(video_path)
+            if video_clip.audio is not None:
+                audio_clip = video_clip.audio
+                audio_clip.write_audiofile(temp_audio_path, verbose=False, logger=None)
+                return temp_audio_path, temp_audio_path
+
+        except Exception as e:
+            print(f"Temporary audio extraction failed: {e}")
+
+        finally:
+            self._cleanup_video_resources(audio_clip, video_clip)
+
+        return None, None
+
+    def _cleanup_video_resources(self, audio_clip, video_clip):
+        """Safely cleanup video and audio resources"""
+        if audio_clip:
+            try:
+                audio_clip.close()
+            except Exception:
+                pass
+
+        if video_clip:
+            try:
+                video_clip.close()
+            except Exception:
+                pass
+
+    def _safe_file_removal(self, file_path: str):
+        """Safely remove a file with error handling"""
+        try:
+            os.remove(file_path)
+        except OSError as e:
+            print(f"Could not remove file {file_path}: {e}")
 
     def _extract_shortcode(self, url: str) -> Optional[str]:
-        """Extract shortcode from Instagram URL"""
+        """
+        Extract shortcode from Instagram URL
+
+        Args:
+            url: Instagram URL
+
+        Returns:
+            Shortcode string or None if invalid
+        """
         try:
             if '/reel/' in url:
                 return url.split('/reel/')[1].split('/')[0].split('?')[0]
             elif '/p/' in url:
                 return url.split('/p/')[1].split('/')[0].split('?')[0]
             return None
-        except:
+        except Exception:
             return None
 
     def stop(self):
-        """Stop the download thread"""
+        """Stop the download thread gracefully"""
         self.is_running = False
 
 
 class InstagramDownloaderGUI(QMainWindow):
-    """Main GUI application for Instagram Reels downloader"""
+    """
+    Main GUI application for Instagram Reels downloader
+
+    This class manages the user interface and coordinates between
+    the UI components and the download thread.
+    """
 
     def __init__(self):
         super().__init__()
@@ -340,13 +520,21 @@ class InstagramDownloaderGUI(QMainWindow):
         self.load_settings()
 
     def init_ui(self):
+        """Initialize the user interface"""
+        self._setup_window()
+        self._create_main_layout()
+        self._setup_status_bar()
+
+    def _setup_window(self):
+        """Configure main window properties"""
         self.setWindowTitle("Instagram Media Downloader")
         self.setMinimumSize(1200, 800)
         self.resize(1200, 800)
         self.setStyleSheet(self._get_main_style())
-
         self.create_app_icon()
 
+    def _create_main_layout(self):
+        """Create and setup the main application layout"""
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
@@ -354,12 +542,11 @@ class InstagramDownloaderGUI(QMainWindow):
         main_layout.setSpacing(20)
         main_layout.setContentsMargins(20, 20, 20, 20)
 
+        # Create panels
         left_panel = self._create_left_panel()
-        left_panel.setMaximumWidth(350)
-        left_panel.setMinimumWidth(300)
-
         right_panel = self._create_right_panel()
 
+        # Setup splitter for resizable panels
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(left_panel)
         splitter.addWidget(right_panel)
@@ -369,6 +556,8 @@ class InstagramDownloaderGUI(QMainWindow):
 
         main_layout.addWidget(splitter)
 
+    def _setup_status_bar(self):
+        """Configure the status bar"""
         self.statusBar().showMessage("Ready to download Instagram Reels")
         self.statusBar().setStyleSheet("""
             QStatusBar {
@@ -376,20 +565,20 @@ class InstagramDownloaderGUI(QMainWindow):
                 color: white;
                 font-size: 12px;
                 padding: 5px;
+                border-top: 1px solid #34495e;
             }
         """)
 
     def create_app_icon(self):
-        """Create a simple app icon"""
+        """Create a simple app icon programmatically"""
         try:
-            # Create a simple icon programmatically
             pixmap = QPixmap(64, 64)
             pixmap.fill(QColor("#667eea"))
 
             painter = QPainter(pixmap)
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-            # Draw a simple camera icon
+            # Draw camera icon
             painter.setBrush(QBrush(QColor("white")))
             painter.setPen(QColor("white"))
 
@@ -406,38 +595,106 @@ class InstagramDownloaderGUI(QMainWindow):
 
             painter.end()
 
-            icon = QIcon(pixmap)
-            self.setWindowIcon(icon)
+            self.setWindowIcon(QIcon(pixmap))
+
         except Exception as e:
             print(f"Could not create app icon: {e}")
 
+    def _get_panel_style(self):
+        """Style for left panel with modern design"""
+        return """
+        QFrame {
+            background-color: #ffffff;
+            border: 2px solid #bdc3c7;
+            border-radius: 10px;
+            padding: 1px;
+        }
+        """
+
+    def _get_danger_button_style(self):
+        """Style for danger/delete buttons"""
+        return """
+        QPushButton {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #e74c3c, stop:1 #c0392b);
+            border-radius: 10px;
+            color: white;
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        QPushButton:hover { 
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #d62c1a, stop:1 #a93226);
+        }
+        QPushButton:pressed { 
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #c0392b, stop:1 #922b21);
+        }
+        QPushButton:disabled { 
+            background: #bdc3c7; 
+            color: #7f8c8d; 
+        }
+        """
+
+    def _get_success_button_style(self):
+        """Style for success/folder buttons"""
+        return """
+        QPushButton {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #27ae60, stop:1 #229954);
+            border-radius: 10px;
+            color: white;
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        QPushButton:hover { 
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2ecc71, stop:1 #27ae60);
+        }
+        QPushButton:pressed { 
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #229954, stop:1 #1e8449);
+        }
+        QPushButton:disabled { 
+            background: #bdc3c7; 
+            color: #7f8c8d; 
+        }
+        """
+
     def _create_left_panel(self) -> QWidget:
+        """Create the left control panel"""
         panel = QFrame()
         panel.setFrameStyle(QFrame.Shape.StyledPanel)
-        panel.setStyleSheet("""
-            QFrame {
-                background-color: white;
-                border-radius: 15px;
-                padding: 15px;
-                border: 1px solid #ecf0f1;
-            }
-            """)
+        panel.setStyleSheet(self._get_panel_style())
+        panel.setMaximumWidth(350)
+        panel.setMinimumWidth(300)
 
         layout = QVBoxLayout(panel)
-        layout.setSpacing(1)
+        layout.setSpacing(15)
 
+        # Add components to left panel
+        self._add_title_section(layout)
+        self._add_url_input_section(layout)
+        self._add_download_options_section(layout)
+        self._add_control_buttons_section(layout)
+        self._add_progress_section(layout)
+
+        layout.addStretch()
+
+        return panel
+
+    def _add_title_section(self, layout: QVBoxLayout):
+        """Add title and subtitle to the layout"""
         title_label = QLabel("Instagram Reels\nDownloader")
         title_label.setFont(QFont("Arial", 20, QFont.Weight.Bold))
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_label.setStyleSheet("color: #2c3e50;")
+        title_label.setStyleSheet("color: #2c3e50; margin-bottom: 5px;")
         layout.addWidget(title_label)
 
         subtitle_label = QLabel("Download, Extract & Transcribe")
         subtitle_label.setFont(QFont("Arial", 12))
         subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitle_label.setStyleSheet("color: #7f8c8d; margin-bottom: 10px;")
+        subtitle_label.setStyleSheet("color: #7f8c8d; margin-bottom: 20px;")
         layout.addWidget(subtitle_label)
 
+    def _add_url_input_section(self, layout: QVBoxLayout):
+        """Add URL input section to the layout"""
         url_group = QGroupBox("📎 Add Reel URL")
         url_group.setStyleSheet(self._get_group_style())
         url_layout = QVBoxLayout(url_group)
@@ -447,7 +704,6 @@ class InstagramDownloaderGUI(QMainWindow):
         self.url_input.setPlaceholderText("Paste Instagram Reel URL here...")
         self.url_input.setStyleSheet(self._get_input_style())
         self.url_input.returnPressed.connect(self.add_to_queue)
-        # Removed redundant setMinimumHeight
 
         self.add_button = ModernButton("➕ Add to Queue")
         self.add_button.clicked.connect(self.add_to_queue)
@@ -457,12 +713,14 @@ class InstagramDownloaderGUI(QMainWindow):
 
         layout.addWidget(url_group)
 
-        # Download options
+    def _add_download_options_section(self, layout: QVBoxLayout):
+        """Add download options section to the layout"""
         options_group = QGroupBox("⚙️ Download Options")
         options_group.setStyleSheet(self._get_group_style())
         options_layout = QVBoxLayout(options_group)
-        options_layout.setSpacing(8)  # Fixed spacing between options
+        options_layout.setSpacing(8)
 
+        # Create checkboxes for download options
         self.video_check = QCheckBox("📹 Download Video")
         self.video_check.setChecked(True)
 
@@ -478,30 +736,35 @@ class InstagramDownloaderGUI(QMainWindow):
         self.transcribe_check = QCheckBox("🎤 Transcribe Audio")
         self.transcribe_check.setChecked(False)
 
-        for checkbox in [self.video_check, self.thumbnail_check, self.audio_check,
-                         self.caption_check, self.transcribe_check]:
+        # Apply styling and add to layout
+        checkboxes = [self.video_check, self.thumbnail_check, self.audio_check,
+                      self.caption_check, self.transcribe_check]
+
+        for checkbox in checkboxes:
             checkbox.setStyleSheet(self._get_checkbox_style())
             checkbox.setMinimumHeight(35)
             options_layout.addWidget(checkbox)
 
         layout.addWidget(options_group)
 
-        # Control buttons
+    def _add_control_buttons_section(self, layout: QVBoxLayout):
+        """Add control buttons section to the layout"""
         controls_layout = QVBoxLayout()
-        controls_layout.setSpacing(20)
+        controls_layout.setSpacing(15)
 
+        # Download button
         self.download_button = ModernButton("🚀 Start Download")
         self.download_button.clicked.connect(self.start_download)
 
+        # Clear button
         self.clear_button = ModernButton("🗑️ Clear Queue")
         self.clear_button.clicked.connect(self.clear_queue)
-        self.clear_button.setStyleSheet(self.clear_button.styleSheet().replace(
-            "#667eea", "#e74c3c").replace("#764ba2", "#c0392b"))
+        self.clear_button.setStyleSheet(self._get_danger_button_style())
 
+        # Folder button
         self.folder_button = ModernButton("📁 Open Downloads")
         self.folder_button.clicked.connect(self.open_downloads_folder)
-        self.folder_button.setStyleSheet(self.folder_button.styleSheet().replace(
-            "#667eea", "#27ae60").replace("#764ba2", "#229954"))
+        self.folder_button.setStyleSheet(self._get_success_button_style())
 
         controls_layout.addWidget(self.download_button)
         controls_layout.addWidget(self.clear_button)
@@ -509,13 +772,15 @@ class InstagramDownloaderGUI(QMainWindow):
 
         layout.addLayout(controls_layout)
 
-        # Progress section
+    def _add_progress_section(self, layout: QVBoxLayout):
+        """Add progress section to the layout"""
         progress_group = QGroupBox("📊 Overall Progress")
         progress_group.setStyleSheet(self._get_group_style())
         progress_layout = QVBoxLayout(progress_group)
         progress_layout.setSpacing(10)
 
         self.overall_progress = ModernProgressBar()
+
         self.progress_label = QLabel("Ready to start downloading...")
         self.progress_label.setStyleSheet("""
             color: #2c3e50; 
@@ -530,10 +795,6 @@ class InstagramDownloaderGUI(QMainWindow):
 
         layout.addWidget(progress_group)
 
-        layout.addStretch()
-
-        return panel
-
     def _create_right_panel(self) -> QWidget:
         """Create the right panel with tabs"""
         panel = QWidget()
@@ -544,12 +805,11 @@ class InstagramDownloaderGUI(QMainWindow):
         self.tab_widget = QTabWidget()
         self.tab_widget.setStyleSheet(self._get_tab_style())
 
-        # Queue tab
+        # Add tabs
         queue_widget = self._create_queue_tab()
-        self.tab_widget.addTab(queue_widget, "📋 Download Queue")
-
-        # Results tab
         results_widget = self._create_results_tab()
+
+        self.tab_widget.addTab(queue_widget, "📋 Download Queue")
         self.tab_widget.addTab(results_widget, "✅ Results")
 
         layout.addWidget(self.tab_widget)
@@ -568,7 +828,7 @@ class InstagramDownloaderGUI(QMainWindow):
         header.setStyleSheet("color: #2c3e50; margin-bottom: 15px;")
         layout.addWidget(header)
 
-        # Queue list - removed setAlternatingRowColors
+        # Queue list
         self.queue_list = QListWidget()
         self.queue_list.setStyleSheet(self._get_list_style())
         self.queue_list.setMinimumHeight(400)
@@ -577,21 +837,8 @@ class InstagramDownloaderGUI(QMainWindow):
 
         return widget
 
-    # Fixed closeEvent method - increase wait time
-    def closeEvent(self, event):
-        """Handle application close"""
-        # Stop download thread if running
-        if self.download_thread and self.download_thread.isRunning():
-            self.download_thread.stop()
-            self.download_thread.wait(5000)  # Wait 5 seconds instead of 3
-
-        # Save settings
-        self.save_settings()
-
-        event.accept()
-
     def _create_results_tab(self) -> QWidget:
-        """Create the results tab"""
+        """Create the results display tab"""
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -613,9 +860,10 @@ class InstagramDownloaderGUI(QMainWindow):
         return widget
 
     def add_to_queue(self):
-        """Add URL to download queue"""
+        """Add URL to download queue with validation"""
         url = self.url_input.text().strip()
 
+        # Validate URL input
         if not url:
             return
 
@@ -624,35 +872,36 @@ class InstagramDownloaderGUI(QMainWindow):
                                 "Please enter a valid Instagram Reel URL")
             return
 
-        # Check if URL already exists
+        # Check for duplicate URLs
         for item in self.reel_queue:
             if item.url == url:
                 QMessageBox.information(self, "Duplicate URL",
                                         "This URL is already in the queue")
                 return
 
-        # Add to queue
+        # Create new reel item and add to queue
         reel_item = ReelItem(url=url)
         self.reel_queue.append(reel_item)
 
-        # Add to UI list
-        list_item = QListWidgetItem(f"🔗 {url[:50]}{'...' if len(url) > 50 else ''}")
+        # Add to UI list with truncated URL display
+        display_url = f"🔗 {url[:50]}{'...' if len(url) > 50 else ''}"
+        list_item = QListWidgetItem(display_url)
         list_item.setData(Qt.ItemDataRole.UserRole, reel_item)
         self.queue_list.addItem(list_item)
 
-        # Clear input
+        # Clear input field and update status
         self.url_input.clear()
-
-        # Update status
         self.statusBar().showMessage(f"Added to queue. Total items: {len(self.reel_queue)}")
 
     def clear_queue(self):
-        """Clear the download queue"""
+        """Clear the download queue and reset UI"""
+        # Prevent clearing during active download
         if self.download_thread and self.download_thread.isRunning():
             QMessageBox.warning(self, "Download in Progress",
                                 "Cannot clear queue while downloading")
             return
 
+        # Clear all data and reset UI
         self.reel_queue.clear()
         self.queue_list.clear()
         self.results_text.clear()
@@ -662,17 +911,19 @@ class InstagramDownloaderGUI(QMainWindow):
 
     def start_download(self):
         """Start downloading all items in queue"""
+        # Validate queue has items
         if not self.reel_queue:
             QMessageBox.information(self, "Empty Queue",
                                     "Please add some URLs to the queue first")
             return
 
+        # Check if download is already in progress
         if self.download_thread and self.download_thread.isRunning():
             QMessageBox.information(self, "Download in Progress",
                                     "Download is already in progress")
             return
 
-        # Get download options
+        # Collect download options from checkboxes
         options = {
             'video': self.video_check.isChecked(),
             'thumbnail': self.thumbnail_check.isChecked(),
@@ -681,49 +932,50 @@ class InstagramDownloaderGUI(QMainWindow):
             'transcribe': self.transcribe_check.isChecked()
         }
 
-        # Create and start download thread
+        # Create and configure download thread
         self.download_thread = ReelDownloader(self.reel_queue.copy(), options)
         self.download_thread.progress_updated.connect(self.update_progress)
         self.download_thread.download_completed.connect(self.download_completed)
         self.download_thread.error_occurred.connect(self.download_error)
         self.download_thread.finished.connect(self.download_finished)
 
+        # Start download and update UI
         self.download_thread.start()
-
-        # Update UI
         self.download_button.setEnabled(False)
         self.download_button.setText("⏳ Downloading...")
         self.statusBar().showMessage("Download started...")
 
     def update_progress(self, url: str, progress: int, status: str):
-        """Update progress for specific URL"""
-        # Update overall progress
-        if url:  # Individual item progress
-            # Find and update the specific item
+        """Update progress display for downloads"""
+        if url:  # Update individual item progress
+            # Find and update the specific queue item
             for i in range(self.queue_list.count()):
                 item = self.queue_list.item(i)
                 reel_item = item.data(Qt.ItemDataRole.UserRole)
                 if reel_item.url == url:
+                    # Update reel item data
                     reel_item.progress = progress
                     reel_item.status = status
+
+                    # Update display text
                     url_short = url[:40] + '...' if len(url) > 40 else url
                     if progress == 100:
                         item.setText(f"✅ {url_short} - {status}")
                     else:
                         item.setText(f"📥 {url_short} - {status} ({progress}%)")
                     break
-        else:  # Overall status
+        else:  # Update overall status
             self.progress_label.setText(status)
 
-        # Calculate overall progress
+        # Calculate and update overall progress bar
         if self.reel_queue:
             total_progress = sum(item.progress for item in self.reel_queue)
             overall_progress = total_progress // len(self.reel_queue)
             self.overall_progress.setValue(overall_progress)
 
     def download_completed(self, url: str, result_data: Dict[str, Any]):
-        """Handle completed download"""
-        # Update reel item
+        """Handle successful download completion"""
+        # Update reel item with results
         for item in self.reel_queue:
             if item.url == url:
                 item.status = "Completed"
@@ -737,10 +989,10 @@ class InstagramDownloaderGUI(QMainWindow):
                 item.folder_path = result_data.get('folder_path', '')
                 break
 
-        # Add to results
+        # Add results to results tab
         self._add_to_results(url, result_data)
 
-        # Update queue list
+        # Update queue list display
         for i in range(self.queue_list.count()):
             list_item = self.queue_list.item(i)
             reel_item = list_item.data(Qt.ItemDataRole.UserRole)
@@ -750,18 +1002,18 @@ class InstagramDownloaderGUI(QMainWindow):
                 break
 
     def download_error(self, url: str, error_message: str):
-        """Handle download error"""
-        # Update reel item
+        """Handle download errors"""
+        # Update reel item with error info
         for item in self.reel_queue:
             if item.url == url:
                 item.status = "Error"
                 item.error_message = error_message
                 break
 
-        # Add error to results
+        # Add error to results display
         self.results_text.append(f"\n❌ ERROR for {url}:\n{error_message}\n" + "=" * 60)
 
-        # Update queue list
+        # Update queue list display
         for i in range(self.queue_list.count()):
             list_item = self.queue_list.item(i)
             reel_item = list_item.data(Qt.ItemDataRole.UserRole)
@@ -772,13 +1024,14 @@ class InstagramDownloaderGUI(QMainWindow):
 
     def download_finished(self):
         """Handle download thread completion"""
+        # Reset download button state
         self.download_button.setEnabled(True)
         self.download_button.setText("🚀 Start Download")
         self.overall_progress.setValue(100)
         self.progress_label.setText("All downloads completed!")
         self.statusBar().showMessage("All downloads completed")
 
-        # Show completion message
+        # Show completion summary
         completed = sum(1 for item in self.reel_queue if item.status == "Completed")
         total = len(self.reel_queue)
 
@@ -791,30 +1044,26 @@ class InstagramDownloaderGUI(QMainWindow):
         result_text = f"\n✅ COMPLETED: {url}\n"
         result_text += f"Title: {result_data.get('title', 'N/A')}\n"
 
+        # Add file paths to results
         if 'video_path' in result_data:
             result_text += f"📹 Video: {result_data['video_path']}\n"
-
         if 'thumbnail_path' in result_data:
             result_text += f"🖼️ Thumbnail: {result_data['thumbnail_path']}\n"
-
         if 'audio_path' in result_data:
             result_text += f"🎵 Audio: {result_data['audio_path']}\n"
-
         if 'caption_path' in result_data:
             result_text += f"📝 Caption: {result_data['caption_path']}\n"
-
         if 'transcript_path' in result_data:
             result_text += f"🎤 Transcript: {result_data['transcript_path']}\n"
 
         result_text += "=" * 50
-
         self.results_text.append(result_text)
 
-        # Switch to results tab
+        # Switch to results tab to show completion
         self.tab_widget.setCurrentIndex(1)
 
     def open_downloads_folder(self):
-        """Open the downloads folder"""
+        """Open the downloads folder in system file manager"""
         download_dir = Path("downloads")
         download_dir.mkdir(exist_ok=True)
 
@@ -822,18 +1071,20 @@ class InstagramDownloaderGUI(QMainWindow):
         import platform
 
         try:
+            # Open folder based on operating system
             if platform.system() == "Windows":
                 os.startfile(str(download_dir))
             elif platform.system() == "Darwin":  # macOS
                 subprocess.run(["open", str(download_dir)])
             else:  # Linux
                 subprocess.run(["xdg-open", str(download_dir)])
-        except Exception as e:
+        except Exception:
+            # Fallback: show folder path in message box
             QMessageBox.information(self, "Downloads Folder",
                                     f"Downloads are saved to: {download_dir.absolute()}")
 
     def _is_valid_instagram_url(self, url: str) -> bool:
-        """Validate Instagram URL"""
+        """Validate if URL is a valid Instagram reel/post URL"""
         try:
             parsed = urlparse(url)
             return (parsed.netloc in ['instagram.com', 'www.instagram.com'] and
@@ -842,14 +1093,14 @@ class InstagramDownloaderGUI(QMainWindow):
             return False
 
     def load_settings(self):
-        """Load application settings"""
+        """Load application settings from JSON file"""
         try:
             settings_file = Path("settings.json")
             if settings_file.exists():
                 with open(settings_file, 'r') as f:
                     settings = json.load(f)
 
-                # Apply settings
+                # Apply saved settings to checkboxes
                 self.video_check.setChecked(settings.get('video', True))
                 self.thumbnail_check.setChecked(settings.get('thumbnail', True))
                 self.audio_check.setChecked(settings.get('audio', True))
@@ -860,7 +1111,7 @@ class InstagramDownloaderGUI(QMainWindow):
             print(f"Could not load settings: {e}")
 
     def save_settings(self):
-        """Save application settings"""
+        """Save application settings to JSON file"""
         try:
             settings = {
                 'video': self.video_check.isChecked(),
@@ -877,19 +1128,22 @@ class InstagramDownloaderGUI(QMainWindow):
             print(f"Could not save settings: {e}")
 
     def closeEvent(self, event):
-        """Handle application close"""
+        """Handle application close event"""
         # Stop download thread if running
         if self.download_thread and self.download_thread.isRunning():
             self.download_thread.stop()
-            self.download_thread.wait(5000)  # Wait 5 seconds instead of 3
+            self.download_thread.wait(5000)  # Wait up to 5 seconds
 
-        # Save settings
+        # Save current settings
         self.save_settings()
-
         event.accept()
 
-    # Style methods
+    # =============================================================================
+    # STYLE METHODS - UI Styling and Appearance
+    # =============================================================================
+
     def _get_main_style(self):
+        """Main window gradient background style"""
         return """
         QMainWindow {
             background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,
@@ -899,6 +1153,7 @@ class InstagramDownloaderGUI(QMainWindow):
         """
 
     def _get_group_style(self):
+        """Style for group boxes with rounded borders"""
         return """
         QGroupBox {
             font-weight: bold;
@@ -919,6 +1174,7 @@ class InstagramDownloaderGUI(QMainWindow):
         """
 
     def _get_input_style(self):
+        """Style for input fields with focus states"""
         return """
         QLineEdit {
             border: 2px solid #bdc3c7;
@@ -939,6 +1195,7 @@ class InstagramDownloaderGUI(QMainWindow):
         """
 
     def _get_checkbox_style(self):
+        """Style for checkboxes with custom indicators"""
         return """
         QCheckBox {
             font-size: 14px;
@@ -967,6 +1224,7 @@ class InstagramDownloaderGUI(QMainWindow):
         """
 
     def _get_tab_style(self):
+        """Style for tab widget with rounded corners"""
         return """
         QTabWidget::pane {
             border: 2px solid #bdc3c7;
@@ -997,12 +1255,12 @@ class InstagramDownloaderGUI(QMainWindow):
         """
 
     def _get_list_style(self):
+        """Style for list widgets with hover effects"""
         return """
         QListWidget {
             border: 2px solid #bdc3c7;
             border-radius: 8px;
             background-color: #ffffff;
-            alternate-background-color: #f8f9fa;
             font-size: 14px;
             padding: 8px;
             color: #2c3e50;
@@ -1024,6 +1282,7 @@ class InstagramDownloaderGUI(QMainWindow):
         """
 
     def _get_text_style(self):
+        """Style for text edit widgets with monospace font"""
         return """
         QTextEdit {
             border: 2px solid #bdc3c7;
@@ -1039,12 +1298,15 @@ class InstagramDownloaderGUI(QMainWindow):
 
 
 def main():
+    """Main application entry point"""
+    # Create application instance
     app = QApplication(sys.argv)
     app.setApplicationName("Instagram Downloader")
     app.setApplicationVersion("1.0.0")
     app.setOrganizationName("ReelsDownloader")
     app.setStyle('Fusion')
-    # Global QSS unchanged (no unsupported props)
+
+    # Set global application style
     app.setStyleSheet("""
         * {
             font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
@@ -1057,9 +1319,14 @@ def main():
             padding: 5px;
         }
     """)
+
+    # Create and show main window
     window = InstagramDownloaderGUI()
     window.show()
+
+    # Start application event loop
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()
