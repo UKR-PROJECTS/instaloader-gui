@@ -97,6 +97,44 @@ Instagram-Media-Downloader/
 
    * Click **Open Downloads** to browse downloaded files.
 
+## 🏗️ Packaging as Executable
+
+To create a standalone Windows executable (`.exe`) using **PyInstaller**, follow these steps:
+
+1. **Install PyInstaller**:
+
+   ```bash
+   pip install pyinstaller
+   ```
+
+2. **Build the executable**:
+   Execute the following command from the project root (where `src/main.py` resides):
+
+   ```bash
+   pyinstaller \
+       --onefile \
+       --windowed \
+       --name InstagramMediaDownloader \
+       --icon src/favicon.ico \
+       --add-data "screenshots/Interface.png;screenshots" \
+       --add-data "src/favicon.ico;." \
+       src/main.py
+   ```
+
+   * `--onefile` bundles everything into a single `.exe`.
+   * `--windowed` suppresses the console window (GUI only).
+   * `--name` sets the executable name.
+   * `--icon` specifies the application icon.
+   * `--add-data` includes non-Python files; format is `source_path;destination_folder`.
+
+3. **Locate the executable**:
+   After a successful build, find `InstagramMediaDownloader.exe` in the `dist/` directory.
+
+4. **Distribute**:
+
+   * Copy `dist/InstagramMediaDownloader.exe` to your users.
+   * Optionally include any required `downloads/` folder or dependencies.
+
 ## 🤝 Contributing
 
 Contributions are welcome! To contribute:
