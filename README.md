@@ -123,7 +123,7 @@ pip install -r requirements.txt
 
 ## 📸 Screenshot
 
-![Interface](screenshots/Interface.png)
+![Interface](screenshots/screenshot.png)
 
 ---
 
