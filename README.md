@@ -1,166 +1,157 @@
-# Instagram-Media-Downloader v2.0.0
+# 🚀 Instagram‑Media‑Downloader v2.0.0
 
-[![Status](https://img.shields.io/badge/status-active-47c219.svg)](#) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![License: MIT](https://img.shields.io/badge/License-MIT-green) ![Language: Python](https://img.shields.io/badge/Language-Python-blue) ![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen)
 
 <p align="center">
-    <img src="src/favicon.ico" alt="Instagram-Media-Downloader Icon" width="80" height="80" />
+  <img src="src/favicon.ico" alt="App Icon" width="64" height="64" />
 </p>
 
-**Instagram-Media-Downloader** is a Python-based desktop application built with PyQt6 that enables users to download Instagram Reels along with their video, thumbnails, captions, and optional audio transcription.
+A simple desktop application built with PyQt6 to download Instagram Reels—including video, thumbnail, caption, audio, and optional transcription—in one click.
 
-## 🚀 Features
+---
 
-* Download Instagram Reels as **`.mp4`** files.
-* Extract and save video thumbnails as **`.jpg`** files.
-* Save captions as **`.txt`** files.
-* Extract audio tracks as **`.mp3`** files.
-* Optional transcription of audio to text using OpenAI Whisper.
-* Responsive, user-friendly GUI built with **PyQt6**.
-* Cross-platform support (Windows, macOS, Linux).
-* Queue management for batch downloads with real-time progress.
-* Session-based organization: downloads are grouped by timestamped session folders.
+## ✨ What’s New in v2.0.0
 
-![Interface](screenshots/Interface.png)
+- ✅ Added batch‑download queue with real‑time progress  
+- ✅ Integrated OpenAI Whisper for optional audio transcription  
+- ✅ Improved cross‑platform support and packaging scripts  
+- ✅ Enhanced error handling and retry logic  
 
-## 📂 Folder Structure
+---
 
-```plaintext
-Instagram-Media-Downloader/
-├── LICENSE                    # MIT License file
-├── README.md                  # Project README (this file)
-├── requirements.txt           # Python dependencies
-├── src/                       # Source files
-│   ├── main.py                # Application entry point
-│   ├── favicon.ico            # App icon
-│   └── ...                    # Other modules and resources
-├── screenshots/               # UI screenshots
-│   └── Interface.png          # Main interface example
-└── downloads/                 # Auto-generated on first run
-    └── session_YYYYMMDD_HHMMSS/
-        ├── reel1/             # Folder per reel URL
-        │   ├── video1.mp4
-        │   ├── thumbnail1.jpg
-        │   ├── caption1.txt
-        │   ├── audio1.mp3
-        │   └── transcript1.txt
-        └── reel2/
-            └── ...
+## 🛠️ All Features
+
+- Download Instagram Reels as `.mp4`  
+- Extract and save thumbnails as `.jpg`  
+- Save captions as `.txt`  
+- Extract audio tracks as `.mp3`  
+- Optional audio‑to‑text transcription via Whisper  
+- Session‑based folders timestamped on download  
+- Batch queue management with progress bar  
+- Responsive GUI built in PyQt6 (Windows/macOS/Linux)  
+
+---
+
+## 🗂️ Folder Structure
+
 ```
 
-## 🛠️ Installation
+Instagram-Media-Downloader/
+├── LICENSE                      # MIT license
+├── README.md                    # This file
+├── requirements.txt             # Python dependencies
+├── src/                         # Source code
+│   ├── main.py                  # Entry point
+│   ├── favicon.ico              # App icon
+│   └── ...                      # Other modules & resources
+├── screenshots/                 # UI screenshots
+│   └── Interface.png            # Example interface
+└── downloads/                   # Created on first run
+└── session\_YYYYMMDD\_HHMMSS/
+├── reel1/
+│   ├── video1.mp4
+│   ├── thumbnail1.jpg
+│   ├── caption1.txt
+│   ├── audio1.mp3
+│   └── transcript1.txt
+└── reel2/
+└── …
 
-### Prerequisites
+````
 
-* Python 3.8 or higher
-* `pip` package manager
-* Git
+---
 
-### Steps
+## 📋 Requirements
 
-1. **Clone the repository**:
+- Python 3.8+  
+- `pip` package manager  
+- Git  
+
+Install dependencies via:
+
+```bash
+pip install -r requirements.txt
+````
+
+> If you prefer manual setup:
+>
+> ```bash
+> pip install PyQt6 instaloader moviepy openai-whisper requests pillow
+> ```
+
+---
+
+## ⚙️ Installation
+
+1. **Clone** the repo
 
    ```bash
    git clone https://github.com/UKR-PROJECTS/Instagram-Media-Downloader.git
    cd Instagram-Media-Downloader
    ```
-2. **Install dependencies**:
+2. **Install** dependencies
 
    ```bash
    pip install -r requirements.txt
    ```
 
-> If `requirements.txt` is missing, manually install:
->
-> ```bash
-> pip install PyQt6 instaloader moviepy==1.0.3 openai-whisper requests pillow
-> ```
+---
 
-## 💻 Usage
+## ▶️ Usage
 
-1. **Launch the application**:
+1. **Launch** the app
 
    ```bash
    python src/main.py
    ```
-2. **Add Reels**:
+2. **Add Reels**
 
-   * Paste one or more Instagram Reel URLs into the input field.
-   * Click **Add to Queue**.
-3. **Select Options**:
+   * Paste one or more Instagram Reel URLs
+   * Click **Add to Queue**
+3. **Select Options**
 
-   * Video, Thumbnail, Caption, Audio, Transcription.
-4. **Start Download**:
+   * Choose Video, Thumbnail, Caption, Audio, Transcription
+4. **Start Download**
 
-   * Click **Start Download** to begin.
-   * Monitor progress in the **Queue** and **Results** tabs.
-5. **Open Downloads**:
+   * Click **Start Download**
+   * Monitor progress in the Queue & Results tabs
+5. **Open Downloads**
 
-   * Click **Open Downloads** to browse downloaded files.
+   * Click **Open Downloads** to view files
 
-## 🏗️ Packaging as Executable
+---
 
-To create a standalone Windows executable (`.exe`) using **PyInstaller**, follow these steps:
+## 📸 Screenshot
 
-1. **Install PyInstaller**:
+![Interface](screenshots/Interface.png)
 
-   ```bash
-   pip install pyinstaller
-   ```
+---
 
-2. **Build the executable**:
-   Execute the following command from the project root (where `src/main.py` resides):
+## 🤝 How to Contribute
 
-   ```bash
-   pyinstaller \
-       --onefile \
-       --windowed \
-       --name Instagram-Media-Downloader \
-       --icon src/favicon.ico \
-       src/main.py
-   ```
-
-   * `--onefile` bundles everything into a single `.exe`.
-   * `--windowed` suppresses the console window (GUI only).
-   * `--name` sets the executable name.
-   * `--icon` specifies the application icon.
-   * `--add-data` includes non-Python files; format is `source_path;destination_folder`.
-
-3. **Locate the executable**:
-   After a successful build, find `InstagramMediaDownloader.exe` in the `dist/` directory.
-
-4. **Distribute**:
-
-   * Copy `dist/InstagramMediaDownloader.exe` to your users.
-   * Optionally include any required `downloads/` folder or dependencies.
-
-## 🤝 Contributing
-
-Contributions are welcome! To contribute:
-
-1. Fork the repository
-2. Create a new branch:
+1. **Fork** this repository
+2. **Create** a feature branch
 
    ```bash
    git checkout -b feature/YourFeatureName
    ```
-3. Commit your changes:
+3. **Commit** your changes
 
    ```bash
-   git commit -m "Add some feature"
+   git commit -m "Add awesome feature"
    ```
-4. Push to the branch:
+4. **Push** to your branch
 
    ```bash
    git push origin feature/YourFeatureName
    ```
-5. Open a Pull Request
+5. **Open** a Pull Request and describe your changes
 
-## 📜 License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+---
 
 ## 🙏 Acknowledgments
 
-* Built with [Instaloader](https://instaloader.github.io/) for media fetching.
-* Uses [MoviePy](https://github.com/Zulko/moviepy) for audio/video processing.
-* Integrates [OpenAI Whisper](https://github.com/openai/whisper) for transcription.
+* [Instaloader](https://github.com/instaloader/instaloader) for seamless media fetching
+* [MoviePy](https://github.com/Zulko/moviepy) for audio/video processing
+* [OpenAI Whisper](https://github.com/openai/whisper) for powerful transcription
+
