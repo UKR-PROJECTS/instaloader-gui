@@ -9,7 +9,7 @@ instaloader>=4.9.6
 moviepy==1.0.3
 
 # AI Transcription
-openai-whisper>=20231117
+openai-whisper>=2023/11/17
 
 # Image processing
 Pillow>=9.5.0
