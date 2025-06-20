@@ -1,4 +1,4 @@
-# InstaReelDownloader v1.0.0
+# Instagram-Media-Downloader v1.0.0
 
 [![Status](https://img.shields.io/badge/status-active-47c219.svg)](#) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -6,7 +6,7 @@
     <img src="favicon.png" width="300" height="300" alt="Icon" />
 </p>
 
- <p><strong>InstaReelDownloader</strong> is a Python-based desktop application that allows users to download Instagram Reels along with their captions and thumbnails.</p>
+ <p><strong>Instagram-Media-Downloader</strong> is a Python-based desktop application that allows users to download Instagram Reels along with their captions and thumbnails.</p>
 
 <h2>Features</h2>
     <ul>
@@ -30,10 +30,10 @@
 <h3>Steps</h3>
     <ol>
         <li>Clone this repository:
-            <pre><code>git clone https://github.com/UKR-PROJECTS/InstaReelDownloader.git</code></pre>
+            <pre><code>git clone https://github.com/UKR-PROJECTS/Instagram-Media-Downloader.git</code></pre>
         </li>
         <li>Navigate to the project directory:
-            <pre><code>cd InstaReelDownloader</code></pre>
+            <pre><code>cd Instagram-Media-Downloader</code></pre>
         </li>
         <li>Install the required dependencies:
             <pre><code>pip install -r requirements.txt</code></pre>
