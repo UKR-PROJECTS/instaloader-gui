@@ -6,8 +6,15 @@ Instagram Media Downloader with Queue Management
 A professional PyQt6 application for downloading Instagram Reels with transcription
 
 Author: Ujjwal Nova
-Version: 2.0.0
+Version: 2.0.1
 License: MIT
+
+OPTIMIZATION CHANGES:
+- Lazy loading of heavy imports (instaloader, moviepy, whisper)
+- Delayed initialization of components
+- Reduced import time by moving imports to when needed
+- Splash screen for better UX during startup
+- Optimized dependencies loading
 
 Features:
 - Download Instagram Reels as .mp4 files.
@@ -21,10 +28,10 @@ Features:
 
 Dependencies:
 - PyQt6: GUI framework
-- instaloader: Instagram Media Downloader Engine
-- moviepy==1.0.3: Extracting mp3
-- openai-whisper: Reel Transcription
-- Pillow: Image Processing
+- instaloader: Instagram Media Downloader Engine (LAZY LOADED)
+- moviepy==1.0.3: Extracting mp3 (LAZY LOADED)
+- openai-whisper: Reel Transcription (LAZY LOADED)
+- Pillow: Image Processing (LAZY LOADED)
 
 Usage:
     python src/main.py
@@ -44,33 +51,140 @@ from urllib.parse import urlparse
 import traceback
 from datetime import datetime
 
-# PyQt6 imports
+# PyQt6 imports (these are fast to import)
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QTextEdit, QProgressBar,
     QListWidget, QListWidgetItem, QTabWidget, QFrame, QScrollArea,
     QGridLayout, QSpacerItem, QSizePolicy, QMessageBox, QFileDialog,
-    QComboBox, QCheckBox, QGroupBox, QSplitter
+    QComboBox, QCheckBox, QGroupBox, QSplitter, QSplashScreen
 )
 from PyQt6.QtCore import (
-    Qt, QThread, pyqtSignal, QTimer
+    Qt, QThread, pyqtSignal, QTimer, QRunnable, QThreadPool
 )
 from PyQt6.QtGui import (
     QFont, QPixmap, QPalette, QColor, QIcon, QPainter,
     QBrush, QLinearGradient
 )
 
-# Third-party imports with error handling
-try:
-    import instaloader
-    from moviepy.editor import VideoFileClip
-    import whisper
-    import requests
-    from PIL import Image
-except ImportError as e:
-    print(f"Missing required packages. Please install: {e}")
-    print("Run: pip install instaloader moviepy whisper requests pillow")
-    sys.exit(1)
+# Global variables for lazy-loaded modules
+_instaloader = None
+_moviepy = None
+_whisper = None
+_requests = None
+_PIL = None
+
+
+def lazy_import_instaloader():
+    """Lazy import instaloader when needed"""
+    global _instaloader
+    if _instaloader is None:
+        try:
+            import instaloader
+            _instaloader = instaloader
+        except ImportError as e:
+            raise ImportError(f"Missing instaloader package: {e}")
+    return _instaloader
+
+
+def lazy_import_moviepy():
+    """Lazy import moviepy when needed"""
+    global _moviepy
+    if _moviepy is None:
+        try:
+            from moviepy.editor import VideoFileClip
+            _moviepy = VideoFileClip
+        except ImportError as e:
+            raise ImportError(f"Missing moviepy package: {e}")
+    return _moviepy
+
+
+def lazy_import_whisper():
+    """Lazy import whisper when needed"""
+    global _whisper
+    if _whisper is None:
+        try:
+            import whisper
+            _whisper = whisper
+        except ImportError as e:
+            raise ImportError(f"Missing whisper package: {e}")
+    return _whisper
+
+
+def lazy_import_requests():
+    """Lazy import requests when needed"""
+    global _requests
+    if _requests is None:
+        try:
+            import requests
+            _requests = requests
+        except ImportError as e:
+            raise ImportError(f"Missing requests package: {e}")
+    return _requests
+
+
+def lazy_import_pil():
+    """Lazy import PIL when needed"""
+    global _PIL
+    if _PIL is None:
+        try:
+            from PIL import Image
+            _PIL = Image
+        except ImportError as e:
+            raise ImportError(f"Missing PIL package: {e}")
+    return _PIL
+
+
+class SplashScreen(QSplashScreen):
+    """Custom splash screen with loading progress"""
+
+    def __init__(self):
+        super().__init__()
+        self.setup_splash()
+
+    def setup_splash(self):
+        """Setup splash screen appearance"""
+        # Create splash screen pixmap
+        pixmap = QPixmap(400, 300)
+        pixmap.fill(QColor("#2c3e50"))
+
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        # Draw gradient background
+        gradient = QLinearGradient(0, 0, 400, 300)
+        gradient.setColorAt(0, QColor("#667eea"))
+        gradient.setColorAt(1, QColor("#764ba2"))
+        painter.setBrush(QBrush(gradient))
+        painter.drawRect(0, 0, 400, 300)
+
+        # Draw app name
+        painter.setPen(QColor("white"))
+        painter.setFont(QFont("Arial", 24, QFont.Weight.Bold))
+        painter.drawText(50, 100, "Instagram Downloader")
+
+        painter.setFont(QFont("Arial", 14))
+        painter.drawText(50, 130, "Professional Media Downloader")
+
+        # Draw loading text
+        painter.setFont(QFont("Arial", 12))
+        painter.drawText(50, 200, "Loading components...")
+        painter.drawText(50, 220, "Please wait...")
+
+        # Draw version
+        painter.setFont(QFont("Arial", 10))
+        painter.drawText(50, 270, "Version 2.0.1 - PyInstaller Optimized")
+
+        painter.end()
+
+        self.setPixmap(pixmap)
+        self.setWindowFlags(Qt.WindowType.SplashScreen | Qt.WindowType.FramelessWindowHint)
+
+    def show_message(self, message: str):
+        """Show loading message on splash screen"""
+        self.showMessage(message, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter,
+                         QColor("white"))
+        QApplication.processEvents()
 
 
 @dataclass
@@ -176,7 +290,7 @@ class ModernProgressBar(QProgressBar):
 
 class ReelDownloader(QThread):
     """
-    Background thread for downloading Instagram reels
+    Background thread for downloading Instagram reels with lazy loading
 
     Signals:
         progress_updated: Emitted when download progress changes
@@ -203,17 +317,32 @@ class ReelDownloader(QThread):
         self.is_running = True
         self.whisper_model = None
         self.session_folder = None
+        self.loader = None
 
     def run(self):
-        """Main download thread execution"""
+        """Main download thread execution with lazy loading"""
         try:
             self._setup_session()
-            self._load_whisper_model()
+            self._lazy_load_dependencies()
             self._setup_instaloader()
             self._process_downloads()
 
         except Exception as e:
             self.error_occurred.emit("", f"Thread error: {str(e)}")
+
+    def _lazy_load_dependencies(self):
+        """Load dependencies only when needed"""
+        self.progress_updated.emit("", 0, "Loading dependencies...")
+
+        # Load whisper only if transcription is enabled
+        if self.download_options.get('transcribe', False):
+            self.progress_updated.emit("", 5, "Loading Whisper model...")
+            try:
+                whisper_module = lazy_import_whisper()
+                self.whisper_model = whisper_module.load_model("base")
+            except Exception as e:
+                print(f"Failed to load Whisper model: {e}")
+                self.whisper_model = None
 
     def _setup_session(self):
         """Create timestamped session folder for downloads"""
@@ -221,19 +350,12 @@ class ReelDownloader(QThread):
         self.session_folder = Path("downloads") / f"session_{timestamp}"
         self.session_folder.mkdir(parents=True, exist_ok=True)
 
-    def _load_whisper_model(self):
-        """Load Whisper model if transcription is enabled"""
-        if self.download_options.get('transcribe', False):
-            self.progress_updated.emit("", 0, "Loading Whisper model...")
-            try:
-                self.whisper_model = whisper.load_model("base")
-            except Exception as e:
-                print(f"Failed to load Whisper model: {e}")
-                self.whisper_model = None
-
     def _setup_instaloader(self):
         """Initialize Instaloader with optimal settings"""
-        self.loader = instaloader.Instaloader(
+        self.progress_updated.emit("", 10, "Setting up downloader...")
+        instaloader_module = lazy_import_instaloader()
+
+        self.loader = instaloader_module.Instaloader(
             download_video_thumbnails=True,
             download_comments=False,
             save_metadata=False,
@@ -278,8 +400,9 @@ class ReelDownloader(QThread):
 
             self.progress_updated.emit(item.url, 10, "Fetching reel data...")
 
-            # Get Instagram post
-            post = instaloader.Post.from_shortcode(self.loader.context, shortcode)
+            # Get Instagram post (lazy load instaloader)
+            instaloader_module = lazy_import_instaloader()
+            post = instaloader_module.Post.from_shortcode(self.loader.context, shortcode)
 
             # Create individual reel folder
             reel_folder = self.session_folder / f"reel{reel_number}"
@@ -317,7 +440,9 @@ class ReelDownloader(QThread):
             video_path = reel_folder / f"video{reel_number}.mp4"
 
             try:
-                response = requests.get(post.video_url, stream=True, timeout=30)
+                # Lazy load requests
+                requests_module = lazy_import_requests()
+                response = requests_module.get(post.video_url, stream=True, timeout=30)
                 response.raise_for_status()
 
                 with open(video_path, 'wb') as f:
@@ -339,7 +464,9 @@ class ReelDownloader(QThread):
             thumb_path = reel_folder / f"thumbnail{reel_number}.jpg"
 
             try:
-                response = requests.get(post.display_url, timeout=30)
+                # Lazy load requests
+                requests_module = lazy_import_requests()
+                response = requests_module.get(post.display_url, timeout=30)
                 response.raise_for_status()
 
                 with open(thumb_path, 'wb') as f:
@@ -367,6 +494,8 @@ class ReelDownloader(QThread):
         audio_clip = None
 
         try:
+            # Lazy load moviepy
+            VideoFileClip = lazy_import_moviepy()
             video_clip = VideoFileClip(video_path)
             if video_clip.audio is not None:
                 audio_clip = video_clip.audio
@@ -445,6 +574,8 @@ class ReelDownloader(QThread):
         audio_clip = None
 
         try:
+            # Lazy load moviepy
+            VideoFileClip = lazy_import_moviepy()
             video_clip = VideoFileClip(video_path)
             if video_clip.audio is not None:
                 audio_clip = video_clip.audio

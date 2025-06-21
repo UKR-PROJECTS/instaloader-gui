@@ -1,4 +1,3 @@
-# Instagram Media Downloader Dependencies
 # Core GUI Framework
 PyQt6>=6.4.0
 
