@@ -8,6 +8,7 @@ A professional PyQt6 application for downloading Instagram Reels with transcript
 Author: Ujjwal Nova
 Version: 2.0.1
 License: MIT
+Repository: https://github.com/UKR-PROJECTS/Instagram-Media-Downloader
 
 OPTIMIZATION CHANGES:
 - Lazy loading of heavy imports (instaloader, moviepy, whisper)
@@ -35,8 +36,6 @@ Dependencies:
 
 Usage:
     python src/main.py
-
-Repository: https://github.com/UKR-PROJECTS/Instagram-Media-Downloader
 """
 
 import sys
@@ -1434,7 +1433,7 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("Instagram Downloader")
     app.setApplicationVersion("1.0.0")
-    app.setOrganizationName("ReelsDownloader")
+    app.setOrganizationName("UKR-PROJECTS")
     app.setStyle('Fusion')
 
     # Set global application style
