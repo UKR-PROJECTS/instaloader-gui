@@ -6,7 +6,7 @@
   <img src="src/favicon.ico" alt="App Icon" width="64" height="64" />
 </p>
 
-A simple desktop application built with PyQt6 to download Instagram Reels—including video, thumbnail, caption, audio, and optional transcription—in one click.
+Instagram‑Media‑Downloader is a powerful, open‑source desktop application built with PyQt6 to download Instagram Reels—including video, thumbnail, caption, audio, and optional transcription—in one click.
 
 ---
 
