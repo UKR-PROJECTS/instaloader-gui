@@ -3,7 +3,7 @@ Instagram Media Downloader - Professional Instagram Reel Downloader
 ==============================================
 
 Instagram Media Downloader with Queue Management
-A professional PyQt6 application for downloading Instagram Reels with transcription
+A professional PyQt6 application for downloading Instagram Reels
 
 Author: Ujjwal Nova
 Version: 2.0.1
@@ -11,7 +11,7 @@ License: MIT
 Repository: https://github.com/UKR-PROJECTS/Instagram-Media-Downloader
 
 OPTIMIZATION CHANGES:
-- Lazy loading of heavy imports (instaloader, moviepy, whisper)
+- Lazy loading of heavy imports (instaloader, moviepy)
 - Delayed initialization of components
 - Reduced import time by moving imports to when needed
 - Splash screen for better UX during startup
@@ -22,7 +22,6 @@ Features:
 - Extract and save video thumbnails as .jpg files.
 - Save captions as .txt files.
 - Extract audio tracks as .mp3 files.
-- Optional transcription of audio to text using OpenAI Whisper.
 - Responsive, user-friendly GUI built with PyQt6.
 - Session-based organization: downloads are grouped by timestamped session folders.
 - Queue management for batch downloads with real-time progress.
@@ -31,7 +30,6 @@ Dependencies:
 - PyQt6: GUI framework
 - instaloader: Instagram Media Downloader Engine (LAZY LOADED)
 - moviepy==1.0.3: Extracting mp3 (LAZY LOADED)
-- openai-whisper: Reel Transcription (LAZY LOADED)
 - Pillow: Image Processing (LAZY LOADED)
 
 Usage:
@@ -70,7 +68,6 @@ from PyQt6.QtGui import (
 # Global variables for lazy-loaded modules
 _instaloader = None
 _moviepy = None
-_whisper = None
 _requests = None
 _PIL = None
 
@@ -97,18 +94,6 @@ def lazy_import_moviepy():
         except ImportError as e:
             raise ImportError(f"Missing moviepy package: {e}")
     return _moviepy
-
-
-def lazy_import_whisper():
-    """Lazy import whisper when needed"""
-    global _whisper
-    if _whisper is None:
-        try:
-            import whisper
-            _whisper = whisper
-        except ImportError as e:
-            raise ImportError(f"Missing whisper package: {e}")
-    return _whisper
 
 
 def lazy_import_requests():
@@ -161,10 +146,10 @@ class SplashScreen(QSplashScreen):
         # Draw app name
         painter.setPen(QColor("white"))
         painter.setFont(QFont("Arial", 24, QFont.Weight.Bold))
-        painter.drawText(50, 100, "Instagram Downloader")
+        painter.drawText(50, 100, "Instagram Media Downloader")
 
         painter.setFont(QFont("Arial", 14))
-        painter.drawText(50, 130, "Professional Media Downloader")
+        painter.drawText(50, 130, "Instagram Media Downloader")
 
         # Draw loading text
         painter.setFont(QFont("Arial", 12))
@@ -173,7 +158,7 @@ class SplashScreen(QSplashScreen):
 
         # Draw version
         painter.setFont(QFont("Arial", 10))
-        painter.drawText(50, 270, "Version 2.0.1 - PyInstaller Optimized")
+        painter.drawText(50, 270, "Version 2.0.1 ")
 
         painter.end()
 
@@ -201,7 +186,6 @@ class ReelItem:
         video_path: Path to saved video file
         audio_path: Path to extracted audio
         caption: Reel caption text
-        transcript: Audio transcription
         error_message: Error details if download fails
         folder_path: Path to reel's download folder
     """
@@ -315,7 +299,6 @@ class ReelDownloader(QThread):
         self.reel_items = reel_items
         self.download_options = download_options
         self.is_running = True
-        self.whisper_model = None
         self.session_folder = None
         self.loader = None
 
@@ -333,6 +316,11 @@ class ReelDownloader(QThread):
     def _lazy_load_dependencies(self):
         """Load dependencies only when needed"""
         self.progress_updated.emit("", 0, "Loading dependencies...")
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> parent of 0aee9cb (Bundle ffmpeg and Whisper model for PyInstaller)
 
         # Load whisper only if transcription is enabled
         if self.download_options.get('transcribe', False):
@@ -343,6 +331,10 @@ class ReelDownloader(QThread):
             except Exception as e:
                 print(f"Failed to load Whisper model: {e}")
                 self.whisper_model = None
+<<<<<<< HEAD
+>>>>>>> parent of 0aee9cb (Bundle ffmpeg and Whisper model for PyInstaller)
+=======
+>>>>>>> parent of 0aee9cb (Bundle ffmpeg and Whisper model for PyInstaller)
 
     def _setup_session(self):
         """Create timestamped session folder for downloads"""
@@ -414,7 +406,6 @@ class ReelDownloader(QThread):
             self._download_thumbnail(post, reel_folder, reel_number, result)
             self._extract_audio(reel_folder, reel_number, result)
             self._save_caption(post, reel_folder, reel_number, result)
-            self._transcribe_audio(reel_folder, reel_number, result)
 
             result['title'] = f"Reel {reel_number}"
             self.progress_updated.emit(item.url, 100, "Completed")
@@ -431,8 +422,7 @@ class ReelDownloader(QThread):
 
     def _download_video(self, post, reel_folder: Path, reel_number: int, result: Dict):
         """Download video file if enabled"""
-        need_video_for_audio = (self.download_options.get('audio', False) or
-                                self.download_options.get('transcribe', False))
+        need_video_for_audio = (self.download_options.get('audio', False))
 
         if self.download_options.get('video', True) or need_video_for_audio:
             self.progress_updated.emit("", 20, "Downloading video...")
@@ -458,24 +448,36 @@ class ReelDownloader(QThread):
 
     def _download_thumbnail(self, post, reel_folder: Path, reel_number: int, result: Dict):
         """Download thumbnail image if enabled"""
-        if self.download_options.get('thumbnail', True):
-            self.progress_updated.emit("", 40, "Downloading thumbnail...")
+        if not self.download_options.get('thumbnail', True):
+            return
 
-            thumb_path = reel_folder / f"thumbnail{reel_number}.jpg"
+        self.progress_updated.emit("", 40, "Downloading thumbnail.")
+        thumb_path = reel_folder / f"thumbnail{reel_number}.jpg"
 
-            try:
-                # Lazy load requests
-                requests_module = lazy_import_requests()
-                response = requests_module.get(post.display_url, timeout=30)
-                response.raise_for_status()
+        # Determine the correct attribute for the image URL
+        if hasattr(post, "thumbnail_url"):
+            thumb_url = post.thumbnail_url
+        elif hasattr(post, "url"):
+            thumb_url = post.url
+        else:
+            raise AttributeError(
+                f"Cannot find thumbnail URL on Post object; "
+                f"available attributes: {dir(post)}"
+            )
 
-                with open(thumb_path, 'wb') as f:
-                    f.write(response.content)
+        try:
+            requests_module = lazy_import_requests()
+            resp = requests_module.get(thumb_url, timeout=30)
+            resp.raise_for_status()
 
-                result['thumbnail_path'] = str(thumb_path)
+            with open(thumb_path, 'wb') as f:
+                f.write(resp.content)
 
-            except Exception as e:
-                print(f"Thumbnail download failed: {e}")
+            result['thumbnail_path'] = str(thumb_path)
+
+        except Exception as e:
+            print(f"Thumbnail download failed: {e}")
+
 
     def _extract_audio(self, reel_folder: Path, reel_number: int, result: Dict):
         """Extract audio from video if enabled"""
@@ -864,12 +866,9 @@ class InstagramDownloaderGUI(QMainWindow):
         self.caption_check = QCheckBox("📝 Get Caption")
         self.caption_check.setChecked(True)
 
-        self.transcribe_check = QCheckBox("🎤 Transcribe Audio")
-        self.transcribe_check.setChecked(False)
-
         # Apply styling and add to layout
         checkboxes = [self.video_check, self.thumbnail_check, self.audio_check,
-                      self.caption_check, self.transcribe_check]
+                      self.caption_check]
 
         for checkbox in checkboxes:
             checkbox.setStyleSheet(self._get_checkbox_style())
@@ -1060,7 +1059,6 @@ class InstagramDownloaderGUI(QMainWindow):
             'thumbnail': self.thumbnail_check.isChecked(),
             'audio': self.audio_check.isChecked(),
             'caption': self.caption_check.isChecked(),
-            'transcribe': self.transcribe_check.isChecked()
         }
 
         # Create and configure download thread
@@ -1116,7 +1114,6 @@ class InstagramDownloaderGUI(QMainWindow):
                 item.audio_path = result_data.get('audio_path', '')
                 item.thumbnail_path = result_data.get('thumbnail_path', '')
                 item.caption = result_data.get('caption', '')
-                item.transcript = result_data.get('transcript', '')
                 item.folder_path = result_data.get('folder_path', '')
                 break
 
@@ -1184,8 +1181,6 @@ class InstagramDownloaderGUI(QMainWindow):
             result_text += f"🎵 Audio: {result_data['audio_path']}\n"
         if 'caption_path' in result_data:
             result_text += f"📝 Caption: {result_data['caption_path']}\n"
-        if 'transcript_path' in result_data:
-            result_text += f"🎤 Transcript: {result_data['transcript_path']}\n"
 
         result_text += "=" * 50
         self.results_text.append(result_text)
@@ -1236,7 +1231,6 @@ class InstagramDownloaderGUI(QMainWindow):
                 self.thumbnail_check.setChecked(settings.get('thumbnail', True))
                 self.audio_check.setChecked(settings.get('audio', True))
                 self.caption_check.setChecked(settings.get('caption', True))
-                self.transcribe_check.setChecked(settings.get('transcribe', False))
 
         except Exception as e:
             print(f"Could not load settings: {e}")
@@ -1249,7 +1243,6 @@ class InstagramDownloaderGUI(QMainWindow):
                 'thumbnail': self.thumbnail_check.isChecked(),
                 'audio': self.audio_check.isChecked(),
                 'caption': self.caption_check.isChecked(),
-                'transcribe': self.transcribe_check.isChecked()
             }
 
             with open("settings.json", 'w') as f:
