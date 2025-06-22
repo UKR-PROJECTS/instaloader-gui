@@ -316,25 +316,6 @@ class ReelDownloader(QThread):
     def _lazy_load_dependencies(self):
         """Load dependencies only when needed"""
         self.progress_updated.emit("", 0, "Loading dependencies...")
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> parent of 0aee9cb (Bundle ffmpeg and Whisper model for PyInstaller)
-
-        # Load whisper only if transcription is enabled
-        if self.download_options.get('transcribe', False):
-            self.progress_updated.emit("", 5, "Loading Whisper model...")
-            try:
-                whisper_module = lazy_import_whisper()
-                self.whisper_model = whisper_module.load_model("base")
-            except Exception as e:
-                print(f"Failed to load Whisper model: {e}")
-                self.whisper_model = None
-<<<<<<< HEAD
->>>>>>> parent of 0aee9cb (Bundle ffmpeg and Whisper model for PyInstaller)
-=======
->>>>>>> parent of 0aee9cb (Bundle ffmpeg and Whisper model for PyInstaller)
 
     def _setup_session(self):
         """Create timestamped session folder for downloads"""
