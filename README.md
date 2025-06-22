@@ -1,4 +1,4 @@
-# 🚀 Instagram‑Media‑Downloader v2.0.0
+# 🚀 Instagram‑Media‑Downloader v2.0.1
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-green) ![Language: Python](https://img.shields.io/badge/Language-Python-blue) ![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen)
 
@@ -6,16 +6,15 @@
   <img src="src/favicon.ico" alt="App Icon" width="64" height="64" />
 </p>
 
-Instagram‑Media‑Downloader is a powerful, open‑source desktop application built with PyQt6 to download Instagram Reels—including video, thumbnail, caption, audio, and optional transcription—in one click.
+Instagram‑Media‑Downloader is a powerful, open‑source desktop application built with PyQt6 to download Instagram Reels—including video, thumbnail, caption, and audio—in one click with batch queue support and efficient performance.
 
 ---
 
-## ✨ What’s New in v2.0.0
+## ✨ What’s New in v2.0.1
 
-- ✅ Added batch‑download queue with real‑time progress  
-- ✅ Integrated OpenAI Whisper for optional audio transcription  
-- ✅ Improved cross‑platform support and packaging scripts  
-- ✅ Enhanced error handling and retry logic  
+- ❌ Removed optional Whisper transcription feature  
+- 🌀 Implemented lazy loading to reduce memory consumption  
+- 🧼 Minor UI and stability improvements  
 
 ---
 
@@ -25,10 +24,9 @@ Instagram‑Media‑Downloader is a powerful, open‑source desktop application 
 - Extract and save thumbnails as `.jpg`  
 - Save captions as `.txt`  
 - Extract audio tracks as `.mp3`  
-- Optional audio‑to‑text transcription via Whisper  
 - Session‑based folders timestamped on download  
 - Batch queue management with progress bar  
-- Responsive GUI built in PyQt6 (Windows/macOS/Linux)  
+- Lightweight & responsive PyQt6 GUI (Windows/macOS/Linux)  
 
 ---
 
@@ -42,20 +40,18 @@ Instagram-Media-Downloader/
 ├── requirements.txt             # Python dependencies
 ├── src/                         # Source code
 │   ├── main.py                  # Entry point
-│   ├── favicon.ico              # App icon
-│   └── ...                      # Other modules & resources
+│   └── favicon.ico              # App icon
 ├── screenshots/                 # UI screenshots
-│   └── Interface.png            # Example interface
+│   └── screenshot.png           # Example interface
 └── downloads/                   # Created on first run
 └── session\_YYYYMMDD\_HHMMSS/
 ├── reel1/
 │   ├── video1.mp4
 │   ├── thumbnail1.jpg
 │   ├── caption1.txt
-│   ├── audio1.mp3
-│   └── transcript1.txt
+│   └── audio1.mp3
 └── reel2/
-└── …
+└── ...
 
 ````
 
@@ -67,29 +63,30 @@ Instagram-Media-Downloader/
 - `pip` package manager  
 - Git  
 
-Install dependencies via:
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ````
 
-> If you prefer manual setup:
+> Or manually:
 >
 > ```bash
-> pip install PyQt6 instaloader moviepy==1.0.3 openai-whisper requests pillow
+> pip install PyQt6 instaloader moviepy==1.0.3 requests pillow
 > ```
 
 ---
 
 ## ⚙️ Installation
 
-1. **Clone** the repo
+1. **Clone** the repository:
 
    ```bash
    git clone https://github.com/UKR-PROJECTS/Instagram-Media-Downloader.git
    cd Instagram-Media-Downloader
    ```
-2. **Install** dependencies
+
+2. **Install** Python dependencies:
 
    ```bash
    pip install -r requirements.txt
@@ -99,25 +96,29 @@ pip install -r requirements.txt
 
 ## ▶️ Usage
 
-1. **Launch** the app
+1. **Launch** the application:
 
    ```bash
    python src/main.py
    ```
-2. **Add Reels**
+
+2. **Add Reels**:
 
    * Paste one or more Instagram Reel URLs
    * Click **Add to Queue**
-3. **Select Options**
 
-   * Choose Video, Thumbnail, Caption, Audio, Transcription
-4. **Start Download**
+3. **Select Options**:
+
+   * Choose Video, Thumbnail, Caption, Audio
+
+4. **Start Download**:
 
    * Click **Start Download**
    * Monitor progress in the Queue & Results tabs
-5. **Open Downloads**
 
-   * Click **Open Downloads** to view files
+5. **Open Downloads**:
+
+   * Click **Open Downloads** to browse saved files
 
 ---
 
@@ -130,28 +131,27 @@ pip install -r requirements.txt
 ## 🤝 How to Contribute
 
 1. **Fork** this repository
-2. **Create** a feature branch
+2. **Create** a feature branch:
 
    ```bash
    git checkout -b feature/YourFeatureName
    ```
-3. **Commit** your changes
+3. **Commit** your changes:
 
    ```bash
-   git commit -m "Add awesome feature"
+   git commit -m "Describe your update"
    ```
-4. **Push** to your branch
+4. **Push** and open a Pull Request:
 
    ```bash
    git push origin feature/YourFeatureName
    ```
-5. **Open** a Pull Request and describe your changes
 
 ---
 
 ## 🙏 Acknowledgments
 
-* [Instaloader](https://github.com/instaloader/instaloader) for seamless media fetching
+* [Instaloader](https://github.com/instaloader/instaloader) for seamless media downloading
 * [MoviePy](https://github.com/Zulko/moviepy) for audio/video processing
-* [OpenAI Whisper](https://github.com/openai/whisper) for powerful transcription
+* [PyQt6](https://pypi.org/project/PyQt6/) for the GUI framework
 
