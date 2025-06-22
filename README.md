@@ -44,16 +44,10 @@ Instagram-Media-Downloader/
 ├── screenshots/                 # UI screenshots
 │   └── screenshot.png           # Example interface
 └── downloads/                   # Created on first run
-└── session\_YYYYMMDD\_HHMMSS/
-├── reel1/
-│   ├── video1.mp4
-│   ├── thumbnail1.jpg
-│   ├── caption1.txt
-│   └── audio1.mp3
-└── reel2/
-└── ...
+      └── session\_YYYYMMDD\_HHMMSS/
+            ├── reel1/
+            └── reel2/
 
-````
 
 ---
 
