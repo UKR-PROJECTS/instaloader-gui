@@ -35,7 +35,8 @@ Dependencies:
 - Pillow: Image Processing (LAZY LOADED)
 
 Usage:
-    python src/main.py
+- cd src
+- python main.py
 """
 
 import sys
