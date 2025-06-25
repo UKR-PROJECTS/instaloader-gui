@@ -1,6 +1,6 @@
 {
-  "video": true,
-  "thumbnail": true,
+  "video": false,
+  "thumbnail": false,
   "audio": true,
-  "caption": true
+  "caption": false
 }
