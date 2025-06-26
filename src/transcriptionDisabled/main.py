@@ -34,7 +34,7 @@ Dependencies:
 
 Usage:
 - cd src
-- cd transcription%20disabled
+- cd transcriptionDisabled
 - python main.py
 """
 
