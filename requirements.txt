@@ -16,3 +16,6 @@ requests>=2.28.0
 
 # Optional: For better performance
 ffmpeg-python>=0.2.0
+
+# AI Transcription
+openai-whisper
