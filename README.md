@@ -35,19 +35,48 @@ Instagram‑Media‑Downloader is a powerful, open‑source desktop application 
 ```
 
 Instagram-Media-Downloader/
-├── LICENSE                      # MIT license
-├── README.md                    # This file
-├── requirements.txt             # Python dependencies
-├── src/                         # Source code
-│   ├── main.py                  # Entry point
-│   └── favicon.ico              # App icon
-├── screenshots/                 # UI screenshots
-│   └── screenshot.png           # Example interface
-└── downloads/                   # Created on first run
-      └── session\_YYYYMMDD\_HHMMSS/
-            ├── reel1/
-            └── reel2/
+├── LICENSE
+├── README.md
+├── requirements.txt
+├── src/
+│   ├── transcriptionEnabled/
+│   │   └── src/
+│   │       ├── main.py
+│   │       ├── core/
+│   │       ├── ui/
+│   │       ├── utils/
+│   │       └── resources/
+│   └── transcriptionDisabled/
+│       └── src/
+│           ├── main.py
+│           ├── core/
+│           ├── ui/
+│           ├── utils/
+│           └── resources/
+├── screenshots/
+│   └── screenshot.png
+└── downloads/
+    └── session_YYYYMMDD_HHMMSS/
+        ├── reel1/
+        └── reel2/
 
+
+---
+
+## 📝 Transcription Enabled vs Disabled
+
+**Transcription Enabled**
+- Supports audio-to-text transcription using OpenAI Whisper.
+- Can generate and save transcript files (.txt) for downloaded Reels.
+- Requires the `openai-whisper` package (lazy loaded).
+- UI and results display transcript information if selected.
+- Suitable for users who want automatic speech-to-text for Reels' audio.
+
+**Transcription Disabled**
+- Does not include any audio transcription features.
+- Only downloads video, audio, thumbnails, and captions (no transcript files).
+- No dependency on Whisper or related code.
+- Lighter and simpler for users who do not need transcription.
 
 ---
 
