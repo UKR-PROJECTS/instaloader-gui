@@ -106,7 +106,7 @@ pip install -r requirements.txt
 1. **Clone** the repository:
 
    ```bash
-   git clone https://github.com/UKR-PROJECTS/Instagram-Media-Downloader.git
+   git clone https://github.com/UKR-PROJECTS/instaloader-gui.git
    cd instaloader-gui
    ```
 
