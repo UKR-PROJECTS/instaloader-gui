@@ -107,7 +107,7 @@ pip install -r requirements.txt
 
    ```bash
    git clone https://github.com/UKR-PROJECTS/Instagram-Media-Downloader.git
-   cd Instagram-Media-Downloader
+   cd instaloader-gui
    ```
 
 2. **Install** Python dependencies:
