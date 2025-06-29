@@ -1,5 +1,5 @@
 """
-Instagram Media Downloader - Professional Instagram Reel Downloader  with transcription
+Instagram Media Downloader - Professional Instagram Reel Downloader
 ==============================================
 
 Instagram Media Downloader with Queue Management
@@ -11,7 +11,7 @@ License: MIT
 Repository: https://github.com/UKR-PROJECTS/Instagram-Media-Downloader
 
 OPTIMIZATION CHANGES:
-- Lazy loading of heavy imports (instaloader, moviepy, whisper)
+- Lazy loading of heavy imports (instaloader, moviepy)
 - Delayed initialization of components
 - Reduced import time by moving imports to when needed
 - Splash screen for better UX during startup
@@ -22,7 +22,6 @@ Features:
 - Extract and save video thumbnails as .jpg files.
 - Save captions as .txt files.
 - Extract audio tracks as .mp3 files.
-- Optional transcription of audio to text using OpenAI Whisper.
 - Responsive, user-friendly GUI built with PyQt6.
 - Session-based organization: downloads are grouped by timestamped session folders.
 - Queue management for batch downloads with real-time progress.
@@ -32,10 +31,9 @@ Dependencies:
 - instaloader: Instagram Media Downloader Engine (LAZY LOADED)
 - moviepy==1.0.3: Extracting mp3 (LAZY LOADED)
 - Pillow: Image Processing (LAZY LOADED)
-- openai-whisper: Reel Transcription (LAZY LOADED)
 
 Usage:
-- cd src/transcriptionEnabled
+- cd src/transcriptionDisabled
 - python -m src.main
 """
 

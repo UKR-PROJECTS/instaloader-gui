@@ -1,13 +1,13 @@
 """
-This module provides utility functions for lazy importing of optional dependencies.
-Each function attempts to import a specific package only when it is first needed,
-and caches the imported module or class in a global variable for future use.
-If the required package is not installed, an ImportError with a descriptive message is raised.
+This module provides utility functions for lazy importing of commonly used packages.
+Each function imports its respective package only when needed, and caches the imported
+module or class in a global variable for subsequent use. This approach helps to reduce
+initial load time and memory usage, especially when some dependencies are optional or
+not always required.
 
-Lazy imports implemented for:
+Lazy imports provided:
 - instaloader
 - moviepy.editor.VideoFileClip
-- whisper
 - requests
 - PIL.Image
 """
@@ -15,7 +15,6 @@ Lazy imports implemented for:
 # Global variables for lazy-loaded modules
 _instaloader = None
 _moviepy = None
-_whisper = None
 _requests = None
 _PIL = None
 
@@ -42,18 +41,6 @@ def lazy_import_moviepy():
         except ImportError as e:
             raise ImportError(f"Missing moviepy package: {e}")
     return _moviepy
-
-
-def lazy_import_whisper():
-    """Lazy import whisper when needed"""
-    global _whisper
-    if _whisper is None:
-        try:
-            import whisper
-            _whisper = whisper
-        except ImportError as e:
-            raise ImportError(f"Missing whisper package: {e}")
-    return _whisper
 
 
 def lazy_import_requests():

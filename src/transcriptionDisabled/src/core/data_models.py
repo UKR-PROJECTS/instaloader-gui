@@ -1,10 +1,9 @@
 """
-This module defines data models used in the transcription-enabled core of the application.
+This module defines data models used in the application.
 
-Currently, it provides the ReelItem dataclass, which encapsulates all relevant information
-about an Instagram reel download, including its URL, status, file paths, captions, transcripts,
-and error details. This model is used to manage and track the state of reel downloads and
-their associated metadata throughout the application's workflow.
+Currently, it provides the ReelItem dataclass, which encapsulates all relevant
+information for an Instagram reel download task, including URLs, file paths,
+status, progress, captions, transcripts, and error messages.
 """
 
 from dataclasses import dataclass
@@ -23,7 +22,6 @@ class ReelItem:
         video_path: Path to saved video file
         audio_path: Path to extracted audio
         caption: Reel caption text
-        transcript: Audio transcription
         error_message: Error details if download fails
         folder_path: Path to reel's download folder
     """

@@ -1,21 +1,18 @@
 """
-ReelDownloader: Instagram Reel Download and Processing Thread
+ReelDownloader: Instagram Reel Downloading Thread
 
-This module defines the ReelDownloader class, a QThread-based background worker for downloading
-Instagram reels and associated media (video, thumbnail, audio, captions, and transcripts).
-It supports lazy loading of heavy dependencies (instaloader, moviepy, whisper, requests) to optimize
-startup time and memory usage. The downloader can extract audio, save captions, and transcribe audio
-using OpenAI's Whisper model if enabled in the download options.
+This module defines the ReelDownloader class, a QThread-based background worker for downloading Instagram reels.
+It supports lazy loading of dependencies (instaloader, moviepy, requests), and provides options to download video,
+thumbnail, audio, and captions for each reel. Download progress and errors are communicated via Qt signals for UI updates.
 
 Features:
-- Download Instagram reels (video and thumbnail) to organized session folders
-- Extract and save audio from reels
-- Save captions and generate transcripts using Whisper
-- Emits Qt signals for progress updates, completion, and error handling
+- Downloads reels from a list of Instagram URLs (ReelItem objects)
+- Supports user options for video, audio extraction, thumbnail, and caption saving
+- Creates a timestamped session folder for each download batch
+- Handles errors gracefully and emits progress updates
 - Designed for integration with PyQt6 GUI applications
 
-Dependencies are loaded only when required, and all file operations are handled with error checking
-and resource cleanup.
+Dependencies are loaded only when needed to optimize startup time and resource usage.
 """
 
 import os
@@ -28,7 +25,6 @@ from src.core.data_models import ReelItem
 from src.utils.lazy_imports import (
     lazy_import_instaloader,
     lazy_import_moviepy,
-    lazy_import_whisper,
     lazy_import_requests,
 )
 
@@ -60,7 +56,6 @@ class ReelDownloader(QThread):
         self.reel_items = reel_items
         self.download_options = download_options
         self.is_running = True
-        self.whisper_model = None
         self.session_folder = None
         self.loader = None
 
@@ -78,16 +73,6 @@ class ReelDownloader(QThread):
     def _lazy_load_dependencies(self):
         """Load dependencies only when needed"""
         self.progress_updated.emit("", 0, "Loading dependencies...")
-
-        # Load whisper only if transcription is enabled
-        if self.download_options.get('transcribe', False):
-            self.progress_updated.emit("", 5, "Loading Whisper model...")
-            try:
-                whisper_module = lazy_import_whisper()
-                self.whisper_model = whisper_module.load_model("base")
-            except Exception as e:
-                print(f"Failed to load Whisper model: {e}")
-                self.whisper_model = None
 
     def _setup_session(self):
         """Create timestamped session folder for downloads"""
@@ -159,7 +144,6 @@ class ReelDownloader(QThread):
             self._download_thumbnail(post, reel_folder, reel_number, result)
             self._extract_audio(reel_folder, reel_number, result)
             self._save_caption(post, reel_folder, reel_number, result)
-            self._transcribe_audio(reel_folder, reel_number, result)
 
             result['title'] = f"Reel {reel_number}"
             self.progress_updated.emit(item.url, 100, "Completed")
@@ -176,8 +160,7 @@ class ReelDownloader(QThread):
 
     def _download_video(self, post, reel_folder: Path, reel_number: int, result: Dict):
         """Download video file if enabled"""
-        need_video_for_audio = (self.download_options.get('audio', False) or
-                                self.download_options.get('transcribe', False))
+        need_video_for_audio = (self.download_options.get('audio', False))
 
         if self.download_options.get('video', True) or need_video_for_audio:
             self.progress_updated.emit("", 20, "Downloading video...")
@@ -232,6 +215,7 @@ class ReelDownloader(QThread):
 
         except Exception as e:
             print(f"Thumbnail download failed: {e}")
+
 
     def _extract_audio(self, reel_folder: Path, reel_number: int, result: Dict):
         """Extract audio from video if enabled"""

@@ -1,3 +1,25 @@
+"""
+Instagram Reels Downloader GUI
+
+This module implements the main window for a PyQt6-based desktop application
+that allows users to download Instagram Reels (and optionally posts) with
+various options such as downloading video, thumbnail, extracting audio,
+getting captions, and transcribing audio.
+
+Features:
+- Modern, user-friendly interface with resizable panels and tabs.
+- Add multiple Instagram Reel URLs to a download queue.
+- Select download options via checkboxes.
+- Start, monitor, and clear download queue.
+- View download progress and results.
+- Open downloads folder directly from the app.
+- Settings are persisted between sessions.
+
+Dependencies:
+- PyQt6 for GUI components.
+- Custom modules for downloading and UI components.
+"""
+
 import os
 import json
 from pathlib import Path
