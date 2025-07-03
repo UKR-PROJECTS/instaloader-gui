@@ -1,4 +1,4 @@
-# 🚀 Instagram‑Media‑Downloader v2.0.1
+# 🚀 instaloader-gui v2.0.1
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-green) ![Language: Python](https://img.shields.io/badge/Language-Python-blue) ![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen)
 
@@ -6,7 +6,7 @@
   <img src="src/transcriptionEnabled/src/favicon.ico" alt="App Icon" width="64" height="64" />
 </p>
 
-Instagram‑Media‑Downloader is a powerful, open‑source desktop application built with PyQt6 to download Instagram Reels—including video, thumbnail, caption, and audio—in one click with batch queue support and efficient performance.
+instaloader-gui is a powerful, open‑source desktop application built with PyQt6 to download Instagram Reels—including video, thumbnail, caption, and audio—in one click with batch queue support and efficient performance.
 
 ---
 
