@@ -8,7 +8,7 @@ A professional PyQt6 application for downloading Instagram Reels
 Author: Ujjwal Nova
 Version: 2.0.1
 License: MIT
-Repository: https://github.com/ukr-projects/instaloader-gui
+Repository: https://github.com/ukr-projects/insta-downloader-gui
 
 OPTIMIZATION CHANGES:
 - Lazy loading of heavy imports (instaloader, moviepy)
@@ -47,9 +47,8 @@ from src.resources.splash import SplashScreen
 def main():
     """Main application entry point"""
     app = QApplication(sys.argv)
-    app.setApplicationName("Instagram Downloader")
-    app.setApplicationVersion("1.0.0")
-    app.setOrganizationName("UKR-PROJECTS")
+    app.setApplicationName("insta-downloader-gui")
+    app.setApplicationVersion("2.0.1")
     app.setStyle('Fusion')
 
     # Set global application style
