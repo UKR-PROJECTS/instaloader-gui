@@ -1,4 +1,4 @@
-# 🚀 instaloader-gui v2.0.1
+# 🚀 insta-downloader-gui v2.0.1
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-green) ![Language: Python](https://img.shields.io/badge/Language-Python-blue) ![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen)
 
@@ -6,7 +6,7 @@
   <img src="src/transcriptionEnabled/src/favicon.ico" alt="App Icon" width="64" height="64" />
 </p>
 
-instaloader-gui is a powerful, open‑source desktop application built with PyQt6 to download Instagram Reels—including video, thumbnail, caption, and audio—in one click with batch queue support and efficient performance.
+insta-downloader-gui is a powerful, open‑source desktop application built with PyQt6 to download Instagram Reels—including video, thumbnail, caption, and audio—in one click with batch queue support and efficient performance.
 
 ---
 
@@ -106,8 +106,8 @@ pip install -r requirements.txt
 1. **Clone** the repository:
 
    ```bash
-   git clone https://github.com/ukr-projects/instaloader-gui.git
-   cd instaloader-gui
+   git clone https://github.com/ukr-projects/insta-downloader-gui.git
+   cd insta-downloader-gui
    ```
 
 2. **Install** Python dependencies:
@@ -185,8 +185,8 @@ If you find this project useful, please consider giving it a star on GitHub! You
 
 ## 📞 Support
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/ukr-projects/instaloader-gui/issues)
-- **Discussions**: [Community discussions and Q&A](https://github.com/ukr-projects/instaloader-gui/discussions)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/ukr-projects/insta-downloader-gui/issues)
+- **Discussions**: [Community discussions and Q&A](https://github.com/ukr-projects/insta-downloader-gui/discussions)
 - **Email**: ukrpurojekuto@gmail.com
 
 ---
@@ -195,6 +195,6 @@ If you find this project useful, please consider giving it a star on GitHub! You
 
 **Made with ❤️ by the Ujjwal Nova**
 
-[⭐ Star this repo](https://github.com/ukr-projects/instaloader-gui) | [🐛 Report Bug](https://github.com/ukr-projects/instaloader-gui/issues) | [💡 Request Feature](https://github.com/ukr-projects/instaloader-gui/issues)
+[⭐ Star this repo](https://github.com/ukr-projects/insta-downloader-gui) | [🐛 Report Bug](https://github.com/ukr-projects/insta-downloader-gui/issues) | [💡 Request Feature](https://github.com/ukr-projects/insta-downloader-gui/issues)
 
 </div>
