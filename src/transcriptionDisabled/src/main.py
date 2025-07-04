@@ -8,7 +8,7 @@ A professional PyQt6 application for downloading Instagram Reels
 Author: Ujjwal Nova
 Version: 2.0.1
 License: MIT
-Repository: https://github.com/UKR-PROJECTS/Instagram-Media-Downloader
+Repository: https://github.com/ukr-projects/instaloader-gui
 
 OPTIMIZATION CHANGES:
 - Lazy loading of heavy imports (instaloader, moviepy)
