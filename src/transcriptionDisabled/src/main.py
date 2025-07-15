@@ -1,8 +1,8 @@
 """
-Instagram Media Downloader - Professional Instagram Reel Downloader
+insta-downloader-gui - Professional Instagram Reel Downloader
 ==============================================
 
-Instagram Media Downloader with Queue Management
+insta-downloader-gui with Queue Management
 A professional PyQt6 application for downloading Instagram Reels
 
 Author: Ujjwal Nova
