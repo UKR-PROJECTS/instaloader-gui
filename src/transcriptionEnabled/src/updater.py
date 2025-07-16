@@ -1,8 +1,7 @@
 import subprocess
 import requests
 import os
-from tkinter import messagebox
-from PyQt6.QtWidgets import QProgressDialog, QApplication
+from PyQt6.QtWidgets import QProgressDialog, QApplication, QMessageBox
 from PyQt6.QtCore import Qt
 
 
@@ -51,11 +50,18 @@ def check_for_updates():
     latest_version = get_latest_version()
 
     if current_version and current_version < latest_version:
-        if messagebox.askyesno(
+        reply = QMessageBox.question(
+            None,
             "Update Available",
             f"A new version of yt-dlp is available ({latest_version}). Do you want to update?",
-        ):
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
             download_latest_version()
-            messagebox.showinfo(
-                "Update Complete", "yt-dlp has been updated to the latest version."
+            QMessageBox.information(
+                None,
+                "Update Complete",
+                "yt-dlp has been updated to the latest version.",
             )
