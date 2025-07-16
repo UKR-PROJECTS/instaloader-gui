@@ -184,9 +184,7 @@ class ReelDownloader(QThread):
 
         return result
 
-    def _download_with_yt_dlp(
-        self, item: ReelItem, reel_number: int
-    ) -> Dict[str, Any]:
+    def _download_with_yt_dlp(self, item: ReelItem, reel_number: int) -> Dict[str, Any]:
         """Download using yt-dlp"""
         import subprocess
 
