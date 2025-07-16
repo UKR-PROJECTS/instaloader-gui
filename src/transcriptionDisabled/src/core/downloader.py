@@ -6,6 +6,9 @@ It supports lazy loading of dependencies (instaloader, moviepy, requests), and p
 thumbnail, audio, and captions for each reel. Download progress and errors are communicated via Qt signals for UI updates.
 
 Features:
+- Dual download engines: yt-dlp and instaloader.
+- Automatic fallback to the secondary downloader if the primary one fails.
+- User-selectable preferred downloader.
 - Downloads reels from a list of Instagram URLs (ReelItem objects)
 - Supports user options for video, audio extraction, thumbnail, and caption saving
 - Creates a timestamped session folder for each download batch
@@ -16,6 +19,7 @@ Dependencies are loaded only when needed to optimize startup time and resource u
 """
 
 import os
+import json
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime
@@ -99,14 +103,34 @@ class ReelDownloader(QThread):
             if not self.is_running:
                 break
 
-            try:
-                self.progress_updated.emit(item.url, 0, "Starting download...")
-                result = self._download_reel(item, i)
-                self.download_completed.emit(item.url, result)
+            downloader = self.download_options.get("downloader", "Instaloader")
+            primary_downloader = (
+                self._download_reel
+                if downloader == "Instaloader"
+                else self._download_with_yt_dlp
+            )
+            fallback_downloader = (
+                self._download_with_yt_dlp
+                if downloader == "Instaloader"
+                else self._download_reel
+            )
 
+            try:
+                self.progress_updated.emit(
+                    item.url, 0, f"Starting download with {downloader}..."
+                )
+                result = primary_downloader(item, i)
+                self.download_completed.emit(item.url, result)
             except Exception as e:
-                error_msg = f"Download failed: {str(e)}"
-                self.error_occurred.emit(item.url, error_msg)
+                self.progress_updated.emit(
+                    item.url, 0, f"{downloader} failed, trying fallback..."
+                )
+                try:
+                    result = fallback_downloader(item, i)
+                    self.download_completed.emit(item.url, result)
+                except Exception as e2:
+                    error_msg = f"Both downloaders failed: {e} | {e2}"
+                    self.error_occurred.emit(item.url, error_msg)
 
     def _download_reel(self, item: ReelItem, reel_number: int) -> Dict[str, Any]:
         """
@@ -158,6 +182,70 @@ class ReelDownloader(QThread):
             if temp_video_path and os.path.exists(str(temp_video_path)):
                 self._safe_file_removal(str(temp_video_path))
 
+        return result
+
+    def _download_with_yt_dlp(
+        self, item: ReelItem, reel_number: int
+    ) -> Dict[str, Any]:
+        """Download using yt-dlp"""
+        import subprocess
+
+        result = {}
+        reel_folder = self.session_folder / f"reel{reel_number}"
+        reel_folder.mkdir(exist_ok=True)
+        result["folder_path"] = str(reel_folder)
+
+        yt_dlp_path = Path("bin/yt-dlp.exe")
+        if not yt_dlp_path.exists():
+            raise FileNotFoundError("yt-dlp.exe not found in bin folder")
+
+        self.progress_updated.emit(item.url, 10, "Downloading with yt-dlp...")
+
+        # Command to download video
+        video_path = reel_folder / f"video{reel_number}.mp4"
+        cmd = [
+            str(yt_dlp_path),
+            item.url,
+            "-o",
+            str(video_path),
+            "--quiet",
+            "--no-warnings",
+        ]
+        subprocess.run(cmd, check=True)
+        result["video_path"] = str(video_path)
+
+        # Get metadata
+        info_cmd = [str(yt_dlp_path), item.url, "--dump-json", "--quiet"]
+        process = subprocess.run(info_cmd, capture_output=True, text=True, check=True)
+        metadata = json.loads(process.stdout)
+
+        # Save thumbnail
+        if self.download_options.get("thumbnail"):
+            thumb_url = metadata.get("thumbnail")
+            if thumb_url:
+                thumb_path = reel_folder / f"thumbnail{reel_number}.jpg"
+                requests_module = lazy_import_requests()
+                resp = requests_module.get(thumb_url, timeout=30)
+                resp.raise_for_status()
+                with open(thumb_path, "wb") as f:
+                    f.write(resp.content)
+                result["thumbnail_path"] = str(thumb_path)
+
+        # Save caption
+        if self.download_options.get("caption"):
+            caption = metadata.get("description", "No caption available")
+            caption_path = reel_folder / f"caption{reel_number}.txt"
+            with open(caption_path, "w", encoding="utf-8") as f:
+                f.write(caption)
+            result["caption_path"] = str(caption_path)
+            result["caption"] = caption
+
+        # Extract audio
+        if self.download_options.get("audio"):
+            self._extract_audio(reel_folder, reel_number, result)
+
+        result["title"] = metadata.get("title", f"Reel {reel_number}")
+        self.progress_updated.emit(item.url, 100, "Completed")
         return result
 
     def _download_video(self, post, reel_folder: Path, reel_number: int, result: Dict):

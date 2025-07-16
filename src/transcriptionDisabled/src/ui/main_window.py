@@ -26,6 +26,7 @@ from urllib.parse import urlparse
 from src.core.data_models import ReelItem
 from src.core.downloader import ReelDownloader
 from src.ui.components import ModernButton, ModernProgressBar
+from src.updater import check_for_updates
 
 # PyQt6 imports (these are fast to import)
 from PyQt6.QtWidgets import (
@@ -44,8 +45,9 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QGroupBox,
     QSplitter,
+    QComboBox,
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont, QPixmap, QColor, QIcon, QPainter, QBrush
 
 
@@ -69,6 +71,7 @@ class InstagramDownloaderGUI(QMainWindow):
         self._setup_window()
         self._create_main_layout()
         self._setup_status_bar()
+        QTimer.singleShot(1000, check_for_updates)  # Check for updates after 1 second
 
     def _setup_window(self):
         """Configure main window properties"""
@@ -218,6 +221,7 @@ class InstagramDownloaderGUI(QMainWindow):
         # Add components to left panel
         self._add_title_section(layout)
         self._add_url_input_section(layout)
+        self._add_downloader_selection_section(layout)
         self._add_download_options_section(layout)
         self._add_control_buttons_section(layout)
         self._add_progress_section(layout)
@@ -260,12 +264,27 @@ class InstagramDownloaderGUI(QMainWindow):
 
         layout.addWidget(url_group)
 
+    def _add_downloader_selection_section(self, layout: QVBoxLayout):
+        """Add downloader selection section to the layout"""
+        downloader_group = QGroupBox("⬇️ Downloader")
+        downloader_group.setStyleSheet(self._get_group_style())
+        downloader_layout = QVBoxLayout(downloader_group)
+        downloader_layout.setSpacing(10)
+
+        self.downloader_combo = QComboBox()
+        self.downloader_combo.addItems(["Instaloader", "yt-dlp"])
+        self.downloader_combo.setStyleSheet(self._get_combo_box_style())
+
+        downloader_layout.addWidget(self.downloader_combo)
+        downloader_group.setLayout(downloader_layout)
+        layout.addWidget(downloader_group)
+
     def _add_download_options_section(self, layout: QVBoxLayout):
         """Add download options section to the layout"""
         options_group = QGroupBox("⚙️ Download Options")
         options_group.setStyleSheet(self._get_group_style())
         options_layout = QVBoxLayout(options_group)
-        options_layout.setSpacing(8)
+        options_layout.setSpacing(5)
 
         # Create checkboxes for download options
         self.video_check = QCheckBox("📹 Download Video")
@@ -290,7 +309,7 @@ class InstagramDownloaderGUI(QMainWindow):
 
         for checkbox in checkboxes:
             checkbox.setStyleSheet(self._get_checkbox_style())
-            checkbox.setMinimumHeight(35)
+            checkbox.setMinimumHeight(25)
             options_layout.addWidget(checkbox)
 
         layout.addWidget(options_group)
@@ -486,6 +505,7 @@ class InstagramDownloaderGUI(QMainWindow):
             "thumbnail": self.thumbnail_check.isChecked(),
             "audio": self.audio_check.isChecked(),
             "caption": self.caption_check.isChecked(),
+            "downloader": self.downloader_combo.currentText(),
         }
 
         # Create and configure download thread
@@ -665,6 +685,9 @@ class InstagramDownloaderGUI(QMainWindow):
                 self.thumbnail_check.setChecked(settings.get("thumbnail", True))
                 self.audio_check.setChecked(settings.get("audio", True))
                 self.caption_check.setChecked(settings.get("caption", True))
+                self.downloader_combo.setCurrentText(
+                    settings.get("downloader", "Instaloader")
+                )
 
         except Exception as e:
             print(f"Could not load settings: {e}")
@@ -677,6 +700,7 @@ class InstagramDownloaderGUI(QMainWindow):
                 "thumbnail": self.thumbnail_check.isChecked(),
                 "audio": self.audio_check.isChecked(),
                 "caption": self.caption_check.isChecked(),
+                "downloader": self.downloader_combo.currentText(),
             }
 
             with open("settings.json", "w") as f:
@@ -719,9 +743,9 @@ class InstagramDownloaderGUI(QMainWindow):
             color: #2c3e50;
             border: 2px solid #bdc3c7;
             border-radius: 10px;
-            margin-top: 8px;
-            padding-top: 8px;
             background-color: #ffffff;
+            margin-top: 3px;
+            padding-top: 3px;            
         }
         QGroupBox::title {
             subcontrol-origin: margin;
@@ -758,12 +782,10 @@ class InstagramDownloaderGUI(QMainWindow):
         QCheckBox {
             font-size: 14px;
             color: #2c3e50;
-            padding: 8px 5px;
-            spacing: 10px;
         }
         QCheckBox::indicator {
-            width: 20px;
-            height: 20px;
+            width: 10px;
+            height: 10px;
         }
         QCheckBox::indicator:unchecked {
             border: 2px solid #bdc3c7;
@@ -851,5 +873,39 @@ class InstagramDownloaderGUI(QMainWindow):
             padding: 15px;
             color: #2c3e50;
             line-height: 1.4;
+        }
+        """
+
+    def _get_combo_box_style(self):
+        """Style for QComboBox"""
+        return """
+        QComboBox {
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-size: 14px;
+            background-color: #ffffff;
+            color: #2c3e50;
+            min-height: 20px;
+        }
+        QComboBox:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        QComboBox::drop-down {
+            border: none;
+        }
+        QComboBox::down-arrow {
+            image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgNkw4IDEwTDEyIDYiIHN0cm9rZT0iIzJjM2U1MCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+);
+            width: 16px;
+            height: 16px;
+            margin-right: 10px;
+        }
+        QComboBox QAbstractItemView {
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            background-color: #ffffff;
+            color: #2c3e50;
+            selection-background-color: #667eea;
         }
         """

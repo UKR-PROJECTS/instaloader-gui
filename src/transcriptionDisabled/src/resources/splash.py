@@ -53,7 +53,7 @@ class SplashScreen(QSplashScreen):
         painter.drawText(50, 100, "Instagram Media Downloader")
 
         painter.setFont(QFont("Arial", 14))
-        painter.drawText(50, 130, "Instagram Media Downloader")
+        painter.drawText(50, 130, "Instagram Downloader")
 
         # Draw loading text
         painter.setFont(QFont("Arial", 12))
@@ -62,7 +62,7 @@ class SplashScreen(QSplashScreen):
 
         # Draw version
         painter.setFont(QFont("Arial", 10))
-        painter.drawText(50, 270, "Version 2.0.1 ")
+        painter.drawText(50, 270, "Version 3.0.0 ")
 
         painter.end()
 

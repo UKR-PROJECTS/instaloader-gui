@@ -1,4 +1,4 @@
-# 🚀 insta-downloader-gui v2.0.1
+# 🚀 insta-downloader-gui v3.0.0
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-green) ![Language: Python](https://img.shields.io/badge/Language-Python-blue) ![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen)
 
@@ -10,23 +10,27 @@ insta-downloader-gui is a powerful, open‑source desktop application built with
 
 ---
 
-## ✨ What’s New in v2.0.1
+## ✨ What’s New in v3.0.0
 
-- ❌ Removed optional Whisper transcription feature  
-- 🌀 Implemented lazy loading to reduce memory consumption  
-- 🧼 Minor UI and stability improvements  
+- **Dual Download Engines**: Now powered by both `instaloader` and `yt-dlp`.
+- **User-Selectable Downloader**: Choose your preferred download engine from the UI.
+- **Automatic Fallback**: If one downloader fails, the app automatically switches to the other to ensure success.
+- **Enhanced Reliability**: Improved download success rates for a wider range of Reels.
 
 ---
 
 ## 🛠️ All Features
 
-- Download Instagram Reels as `.mp4`  
-- Extract and save thumbnails as `.jpg`  
-- Save captions as `.txt`  
-- Extract audio tracks as `.mp3`  
-- Session‑based folders timestamped on download  
-- Batch queue management with progress bar  
-- Lightweight & responsive PyQt6 GUI (Windows/macOS/Linux)  
+- **Dual Download Engines**: Choose between `instaloader` and `yt-dlp`.
+- **Automatic Fallback**: Seamlessly switches engines on failure.
+- **Automatic yt-dlp Updates**: Checks for and installs the latest version of yt-dlp.
+- Download Instagram Reels as `.mp4`.
+- Extract and save thumbnails as `.jpg`.
+- Save captions as `.txt`.
+- Extract audio tracks as `.mp3`.
+- Session-based folders timestamped on download.
+- Batch queue management with progress bar.
+- Lightweight & responsive PyQt6 GUI (Windows/macOS/Linux).
 
 ---
 
@@ -45,6 +49,8 @@ insta-downloader-gui/
 │   ├── transcriptionEnabled/
 │   │   └── src/
 │   │       ├── main.py
+│   │       ├── updater.py
+│   │       ├── bin/
 │   │       ├── core/
 │   │       ├── ui/
 │   │       ├── utils/
@@ -52,6 +58,8 @@ insta-downloader-gui/
 │   └── transcriptionDisabled/
 │       └── src/
 │           ├── main.py
+│           ├── updater.py
+│           ├── bin/
 │           ├── core/
 │           ├── ui/
 │           ├── utils/
@@ -177,6 +185,7 @@ pip install -r requirements.txt
 ## 🙏 Acknowledgments
 
 * [Instaloader](https://github.com/instaloader/instaloader) for seamless media downloading
+* [yt-dlp](https://github.com/yt-dlp/yt-dlp) for robust video downloading
 * [MoviePy](https://github.com/Zulko/moviepy) for audio/video processing
 * [PyQt6](https://pypi.org/project/PyQt6/) for the GUI framework
 

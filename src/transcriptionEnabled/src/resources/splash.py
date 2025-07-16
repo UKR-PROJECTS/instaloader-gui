@@ -62,7 +62,7 @@ class SplashScreen(QSplashScreen):
 
         # Draw version
         painter.setFont(QFont("Arial", 10))
-        painter.drawText(50, 270, "Version 2.0.1 - PyInstaller Optimized")
+        painter.drawText(50, 270, "Version 3.0.0 - PyInstaller Optimized")
 
         painter.end()
 

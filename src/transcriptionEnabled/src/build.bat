@@ -1,6 +1,6 @@
 @echo off
-echo Building Instagram Media Downloader...
-pyinstaller --name "IMD" ^
+echo Building insta-downloader-gui...
+pyinstaller --name "insta-downloader-gui" ^
   --windowed ^
   --onefile ^
   --icon=favicon.ico ^

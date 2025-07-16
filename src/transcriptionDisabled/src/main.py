@@ -6,18 +6,14 @@ insta-downloader-gui with Queue Management
 A professional PyQt6 application for downloading Instagram Reels
 
 Author: Ujjwal Nova
-Version: 2.0.1
+Version: 3.0.0
 License: MIT
 Repository: https://github.com/ukr-projects/insta-downloader-gui
 
-OPTIMIZATION CHANGES:
-- Lazy loading of heavy imports (instaloader, moviepy)
-- Delayed initialization of components
-- Reduced import time by moving imports to when needed
-- Splash screen for better UX during startup
-- Optimized dependencies loading
-
 Features:
+- Dual download engines: yt-dlp and instaloader.
+- Automatic fallback to the secondary downloader if the primary one fails.
+- User-selectable preferred downloader.
 - Download Instagram Reels as .mp4 files.
 - Extract and save video thumbnails as .jpg files.
 - Save captions as .txt files.
@@ -31,6 +27,7 @@ Dependencies:
 - instaloader: Instagram Media Downloader Engine (LAZY LOADED)
 - moviepy==1.0.3: Extracting mp3 (LAZY LOADED)
 - Pillow: Image Processing (LAZY LOADED)
+- yt-dlp.exe: included in the bin folder
 
 Usage:
 - cd src/transcriptionDisabled
@@ -39,6 +36,9 @@ Usage:
 
 import sys
 import os
+
+# Set the current working directory to the script's directory
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from PyQt6.QtWidgets import QApplication
@@ -50,7 +50,7 @@ def main():
     """Main application entry point"""
     app = QApplication(sys.argv)
     app.setApplicationName("insta-downloader-gui")
-    app.setApplicationVersion("2.0.1")
+    app.setApplicationVersion("3.0.0")
     app.setStyle("Fusion")
 
     # Set global application style
