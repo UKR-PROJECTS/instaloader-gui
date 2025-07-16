@@ -29,16 +29,25 @@ from src.ui.components import ModernButton, ModernProgressBar
 
 # PyQt6 imports (these are fast to import)
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QLineEdit, QTextEdit, QListWidget, QListWidgetItem, QTabWidget, QFrame, QMessageBox, QCheckBox, QGroupBox, QSplitter
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QTextEdit,
+    QListWidget,
+    QListWidgetItem,
+    QTabWidget,
+    QFrame,
+    QMessageBox,
+    QCheckBox,
+    QGroupBox,
+    QSplitter,
 )
-from PyQt6.QtCore import (
-    Qt
-)
-from PyQt6.QtGui import (
-    QFont, QPixmap, QColor, QIcon, QPainter,
-    QBrush
-)
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont, QPixmap, QColor, QIcon, QPainter, QBrush
+
 
 class InstagramDownloaderGUI(QMainWindow):
     """
@@ -95,7 +104,8 @@ class InstagramDownloaderGUI(QMainWindow):
     def _setup_status_bar(self):
         """Configure the status bar"""
         self.statusBar().showMessage("Ready to download Instagram Reels")
-        self.statusBar().setStyleSheet("""
+        self.statusBar().setStyleSheet(
+            """
             QStatusBar {
                 background-color: #2c3e50;
                 color: white;
@@ -103,7 +113,8 @@ class InstagramDownloaderGUI(QMainWindow):
                 padding: 5px;
                 border-top: 1px solid #34495e;
             }
-        """)
+        """
+        )
 
     def create_app_icon(self):
         """Create a simple app icon programmatically"""
@@ -270,8 +281,12 @@ class InstagramDownloaderGUI(QMainWindow):
         self.caption_check.setChecked(True)
 
         # Apply styling and add to layout
-        checkboxes = [self.video_check, self.thumbnail_check, self.audio_check,
-                      self.caption_check]
+        checkboxes = [
+            self.video_check,
+            self.thumbnail_check,
+            self.audio_check,
+            self.caption_check,
+        ]
 
         for checkbox in checkboxes:
             checkbox.setStyleSheet(self._get_checkbox_style())
@@ -315,12 +330,14 @@ class InstagramDownloaderGUI(QMainWindow):
         self.overall_progress = ModernProgressBar()
 
         self.progress_label = QLabel("Ready to start downloading...")
-        self.progress_label.setStyleSheet("""
+        self.progress_label.setStyleSheet(
+            """
             color: #2c3e50; 
             font-size: 13px; 
             font-weight: bold; 
             padding: 2px;
-        """)
+        """
+        )
         self.progress_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         progress_layout.addWidget(self.overall_progress)
@@ -401,15 +418,17 @@ class InstagramDownloaderGUI(QMainWindow):
             return
 
         if not self._is_valid_instagram_url(url):
-            QMessageBox.warning(self, "Invalid URL",
-                                "Please enter a valid Instagram Reel URL")
+            QMessageBox.warning(
+                self, "Invalid URL", "Please enter a valid Instagram Reel URL"
+            )
             return
 
         # Check for duplicate URLs
         for item in self.reel_queue:
             if item.url == url:
-                QMessageBox.information(self, "Duplicate URL",
-                                        "This URL is already in the queue")
+                QMessageBox.information(
+                    self, "Duplicate URL", "This URL is already in the queue"
+                )
                 return
 
         # Create new reel item and add to queue
@@ -424,14 +443,17 @@ class InstagramDownloaderGUI(QMainWindow):
 
         # Clear input field and update status
         self.url_input.clear()
-        self.statusBar().showMessage(f"Added to queue. Total items: {len(self.reel_queue)}")
+        self.statusBar().showMessage(
+            f"Added to queue. Total items: {len(self.reel_queue)}"
+        )
 
     def clear_queue(self):
         """Clear the download queue and reset UI"""
         # Prevent clearing during active download
         if self.download_thread and self.download_thread.isRunning():
-            QMessageBox.warning(self, "Download in Progress",
-                                "Cannot clear queue while downloading")
+            QMessageBox.warning(
+                self, "Download in Progress", "Cannot clear queue while downloading"
+            )
             return
 
         # Clear all data and reset UI
@@ -446,22 +468,24 @@ class InstagramDownloaderGUI(QMainWindow):
         """Start downloading all items in queue"""
         # Validate queue has items
         if not self.reel_queue:
-            QMessageBox.information(self, "Empty Queue",
-                                    "Please add some URLs to the queue first")
+            QMessageBox.information(
+                self, "Empty Queue", "Please add some URLs to the queue first"
+            )
             return
 
         # Check if download is already in progress
         if self.download_thread and self.download_thread.isRunning():
-            QMessageBox.information(self, "Download in Progress",
-                                    "Download is already in progress")
+            QMessageBox.information(
+                self, "Download in Progress", "Download is already in progress"
+            )
             return
 
         # Collect download options from checkboxes
         options = {
-            'video': self.video_check.isChecked(),
-            'thumbnail': self.thumbnail_check.isChecked(),
-            'audio': self.audio_check.isChecked(),
-            'caption': self.caption_check.isChecked(),
+            "video": self.video_check.isChecked(),
+            "thumbnail": self.thumbnail_check.isChecked(),
+            "audio": self.audio_check.isChecked(),
+            "caption": self.caption_check.isChecked(),
         }
 
         # Create and configure download thread
@@ -490,7 +514,7 @@ class InstagramDownloaderGUI(QMainWindow):
                     reel_item.status = status
 
                     # Update display text
-                    url_short = url[:40] + '...' if len(url) > 40 else url
+                    url_short = url[:40] + "..." if len(url) > 40 else url
                     if progress == 100:
                         item.setText(f"✅ {url_short} - {status}")
                     else:
@@ -512,12 +536,12 @@ class InstagramDownloaderGUI(QMainWindow):
             if item.url == url:
                 item.status = "Completed"
                 item.progress = 100
-                item.title = result_data.get('title', 'Unknown')
-                item.video_path = result_data.get('video_path', '')
-                item.audio_path = result_data.get('audio_path', '')
-                item.thumbnail_path = result_data.get('thumbnail_path', '')
-                item.caption = result_data.get('caption', '')
-                item.folder_path = result_data.get('folder_path', '')
+                item.title = result_data.get("title", "Unknown")
+                item.video_path = result_data.get("video_path", "")
+                item.audio_path = result_data.get("audio_path", "")
+                item.thumbnail_path = result_data.get("thumbnail_path", "")
+                item.caption = result_data.get("caption", "")
+                item.folder_path = result_data.get("folder_path", "")
                 break
 
         # Add results to results tab
@@ -528,7 +552,7 @@ class InstagramDownloaderGUI(QMainWindow):
             list_item = self.queue_list.item(i)
             reel_item = list_item.data(Qt.ItemDataRole.UserRole)
             if reel_item.url == url:
-                url_short = url[:40] + '...' if len(url) > 40 else url
+                url_short = url[:40] + "..." if len(url) > 40 else url
                 list_item.setText(f"✅ {url_short} - Completed")
                 break
 
@@ -549,7 +573,7 @@ class InstagramDownloaderGUI(QMainWindow):
             list_item = self.queue_list.item(i)
             reel_item = list_item.data(Qt.ItemDataRole.UserRole)
             if reel_item.url == url:
-                url_short = url[:40] + '...' if len(url) > 40 else url
+                url_short = url[:40] + "..." if len(url) > 40 else url
                 list_item.setText(f"❌ {url_short} - Error")
                 break
 
@@ -566,9 +590,12 @@ class InstagramDownloaderGUI(QMainWindow):
         completed = sum(1 for item in self.reel_queue if item.status == "Completed")
         total = len(self.reel_queue)
 
-        QMessageBox.information(self, "Download Complete",
-                                f"Completed {completed}/{total} downloads\n\n"
-                                f"Files are organized in individual reel folders")
+        QMessageBox.information(
+            self,
+            "Download Complete",
+            f"Completed {completed}/{total} downloads\n\n"
+            f"Files are organized in individual reel folders",
+        )
 
     def _add_to_results(self, url: str, result_data: Dict[str, Any]):
         """Add download results to results tab"""
@@ -576,13 +603,13 @@ class InstagramDownloaderGUI(QMainWindow):
         result_text += f"Title: {result_data.get('title', 'N/A')}\n"
 
         # Add file paths to results
-        if 'video_path' in result_data:
+        if "video_path" in result_data:
             result_text += f"📹 Video: {result_data['video_path']}\n"
-        if 'thumbnail_path' in result_data:
+        if "thumbnail_path" in result_data:
             result_text += f"🖼️ Thumbnail: {result_data['thumbnail_path']}\n"
-        if 'audio_path' in result_data:
+        if "audio_path" in result_data:
             result_text += f"🎵 Audio: {result_data['audio_path']}\n"
-        if 'caption_path' in result_data:
+        if "caption_path" in result_data:
             result_text += f"📝 Caption: {result_data['caption_path']}\n"
 
         result_text += "=" * 50
@@ -609,15 +636,19 @@ class InstagramDownloaderGUI(QMainWindow):
                 subprocess.run(["xdg-open", str(download_dir)])
         except Exception:
             # Fallback: show folder path in message box
-            QMessageBox.information(self, "Downloads Folder",
-                                    f"Downloads are saved to: {download_dir.absolute()}")
+            QMessageBox.information(
+                self,
+                "Downloads Folder",
+                f"Downloads are saved to: {download_dir.absolute()}",
+            )
 
     def _is_valid_instagram_url(self, url: str) -> bool:
         """Validate if URL is a valid Instagram reel/post URL"""
         try:
             parsed = urlparse(url)
-            return (parsed.netloc in ['instagram.com', 'www.instagram.com'] and
-                    ('/reel/' in url or '/p/' in url))
+            return parsed.netloc in ["instagram.com", "www.instagram.com"] and (
+                "/reel/" in url or "/p/" in url
+            )
         except:
             return False
 
@@ -626,14 +657,14 @@ class InstagramDownloaderGUI(QMainWindow):
         try:
             settings_file = Path("settings.json")
             if settings_file.exists():
-                with open(settings_file, 'r') as f:
+                with open(settings_file, "r") as f:
                     settings = json.load(f)
 
                 # Apply saved settings to checkboxes
-                self.video_check.setChecked(settings.get('video', True))
-                self.thumbnail_check.setChecked(settings.get('thumbnail', True))
-                self.audio_check.setChecked(settings.get('audio', True))
-                self.caption_check.setChecked(settings.get('caption', True))
+                self.video_check.setChecked(settings.get("video", True))
+                self.thumbnail_check.setChecked(settings.get("thumbnail", True))
+                self.audio_check.setChecked(settings.get("audio", True))
+                self.caption_check.setChecked(settings.get("caption", True))
 
         except Exception as e:
             print(f"Could not load settings: {e}")
@@ -642,13 +673,13 @@ class InstagramDownloaderGUI(QMainWindow):
         """Save application settings to JSON file"""
         try:
             settings = {
-                'video': self.video_check.isChecked(),
-                'thumbnail': self.thumbnail_check.isChecked(),
-                'audio': self.audio_check.isChecked(),
-                'caption': self.caption_check.isChecked(),
+                "video": self.video_check.isChecked(),
+                "thumbnail": self.thumbnail_check.isChecked(),
+                "audio": self.audio_check.isChecked(),
+                "caption": self.caption_check.isChecked(),
             }
 
-            with open("settings.json", 'w') as f:
+            with open("settings.json", "w") as f:
                 json.dump(settings, f, indent=2)
 
         except Exception as e:

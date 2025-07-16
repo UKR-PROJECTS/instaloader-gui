@@ -19,19 +19,12 @@ show_message(message: str):
     Updates the splash screen with a new loading message and processes UI events.
 """
 
-from PyQt6.QtWidgets import (
-    QApplication, QSplashScreen
-)
-from PyQt6.QtCore import (
-    Qt
-)
-from PyQt6.QtGui import (
-    QFont, QPixmap, QColor, QPainter,
-    QBrush, QLinearGradient
-)
+from PyQt6.QtWidgets import QApplication, QSplashScreen
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont, QPixmap, QColor, QPainter, QBrush, QLinearGradient
+
 
 class SplashScreen(QSplashScreen):
-
     """Custom splash screen with loading progress"""
 
     def __init__(self):
@@ -74,10 +67,15 @@ class SplashScreen(QSplashScreen):
         painter.end()
 
         self.setPixmap(pixmap)
-        self.setWindowFlags(Qt.WindowType.SplashScreen | Qt.WindowType.FramelessWindowHint)
+        self.setWindowFlags(
+            Qt.WindowType.SplashScreen | Qt.WindowType.FramelessWindowHint
+        )
 
     def show_message(self, message: str):
         """Show loading message on splash screen"""
-        self.showMessage(message, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter,
-                         QColor("white"))
+        self.showMessage(
+            message,
+            Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter,
+            QColor("white"),
+        )
         QApplication.processEvents()

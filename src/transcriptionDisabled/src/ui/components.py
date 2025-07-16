@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QPushButton, QProgressBar
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
+
 class ModernButton(QPushButton):
     """Custom styled button with modern gradient design"""
 

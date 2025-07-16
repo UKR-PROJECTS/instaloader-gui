@@ -39,20 +39,23 @@ Usage:
 
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from PyQt6.QtWidgets import QApplication
 from src.ui.main_window import InstagramDownloaderGUI
 from src.resources.splash import SplashScreen
+
 
 def main():
     """Main application entry point"""
     app = QApplication(sys.argv)
     app.setApplicationName("insta-downloader-gui")
     app.setApplicationVersion("2.0.1")
-    app.setStyle('Fusion')
+    app.setStyle("Fusion")
 
     # Set global application style
-    app.setStyleSheet("""
+    app.setStyleSheet(
+        """
         * {
             font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
         }
@@ -63,7 +66,8 @@ def main():
             border-radius: 4px;
             padding: 5px;
         }
-    """)
+    """
+    )
 
     # Show splash screen
     splash = SplashScreen()
@@ -76,6 +80,7 @@ def main():
     window.show()
 
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()

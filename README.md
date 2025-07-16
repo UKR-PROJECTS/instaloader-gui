@@ -33,11 +33,14 @@ insta-downloader-gui is a powerful, open‑source desktop application built with
 ## 🗂️ Folder Structure
 
 ```
-
-Instagram-Media-Downloader/
+insta-downloader-gui/
+├── .gitignore
+├── CODE_OF_CONDUCT.md
+├── CONTRIBUTING.md
 ├── LICENSE
 ├── README.md
 ├── requirements.txt
+├── pyproject.toml
 ├── src/
 │   ├── transcriptionEnabled/
 │   │   └── src/
@@ -53,13 +56,11 @@ Instagram-Media-Downloader/
 │           ├── ui/
 │           ├── utils/
 │           └── resources/
+├── tests/
+│   └── test_downloader.py
 ├── screenshots/
 │   └── screenshot.png
-└── downloads/
-    └── session_YYYYMMDD_HHMMSS/
-        ├── reel1/
-        └── reel2/
-
+└── downloads/ (created at runtime)
 ```
 
 ---

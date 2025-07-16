@@ -25,6 +25,7 @@ def lazy_import_instaloader():
     if _instaloader is None:
         try:
             import instaloader
+
             _instaloader = instaloader
         except ImportError as e:
             raise ImportError(f"Missing instaloader package: {e}")
@@ -37,6 +38,7 @@ def lazy_import_moviepy():
     if _moviepy is None:
         try:
             from moviepy.editor import VideoFileClip
+
             _moviepy = VideoFileClip
         except ImportError as e:
             raise ImportError(f"Missing moviepy package: {e}")
@@ -49,6 +51,7 @@ def lazy_import_requests():
     if _requests is None:
         try:
             import requests
+
             _requests = requests
         except ImportError as e:
             raise ImportError(f"Missing requests package: {e}")
@@ -61,6 +64,7 @@ def lazy_import_pil():
     if _PIL is None:
         try:
             from PIL import Image
+
             _PIL = Image
         except ImportError as e:
             raise ImportError(f"Missing PIL package: {e}")

@@ -8,6 +8,7 @@ status, progress, captions, transcripts, and error messages.
 
 from dataclasses import dataclass
 
+
 @dataclass
 class ReelItem:
     """
@@ -25,6 +26,7 @@ class ReelItem:
         error_message: Error details if download fails
         folder_path: Path to reel's download folder
     """
+
     url: str
     title: str = ""
     status: str = "Pending"
