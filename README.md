@@ -124,7 +124,7 @@ pip install -r requirements.txt
 1. **Launch** the application:
 
    ```bash
-   python src/main.py
+   `python src\transcriptionDisabled\src\main.py` or `python src\transcriptionEnabled\src\main.py`
    ```
 
 2. **Add Reels**:
