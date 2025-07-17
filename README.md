@@ -42,33 +42,54 @@ insta-downloader-gui/
 ├── CODE_OF_CONDUCT.md
 ├── CONTRIBUTING.md
 ├── LICENSE
+├── pyproject.toml
 ├── README.md
 ├── requirements.txt
-├── pyproject.toml
+├── downloads/          # Runtime downloads storage
+├── screenshots/
+│   └── screenshot.png
 ├── src/
 │   ├── transcriptionEnabled/
 │   │   └── src/
-│   │       ├── main.py
-│   │       ├── updater.py
-│   │       ├── bin/
-│   │       ├── core/
-│   │       ├── ui/
-│   │       ├── utils/
-│   │       └── resources/
-│   └── transcriptionDisabled/
+│   │       ├── main.py              # Main application entrypoint
+│   │       ├── updater.py           # yt-dlp updater
+│   │       ├── agents/              # Downloader implementations
+│   │       │   ├── instaloader.py
+│   │       │   └── yt_dlp.py
+│   │       ├── bin/                 # Bundled executables
+│   │       │   └── yt-dlp.exe
+│   │       ├── core/                # Business logic
+│   │       │   ├── data_models.py
+│   │       │   └── downloader.py
+│   │       ├── resources/           # GUI resources
+│   │       │   └── splash.py
+│   │       ├── ui/                  # PyQt6 components
+│   │       │   ├── components.py
+│   │       │   └── main_window.py
+│   │       └── utils/               # Helper functions
+│   │           └── lazy_imports.py
+│   └── transcriptionDisabled/       # Lightweight variant
 │       └── src/
 │           ├── main.py
 │           ├── updater.py
+│           ├── agents/
+│           │   ├── instaloader.py
+│           │   └── yt_dlp.py
 │           ├── bin/
+│           │   └── yt-dlp.exe
 │           ├── core/
+│           │   ├── data_models.py
+│           │   └── downloader.py
+│           ├── resources/
+│           │   └── splash.py
 │           ├── ui/
-│           ├── utils/
-│           └── resources/
-├── tests/
-│   └── test_downloader.py
-├── screenshots/
-│   └── screenshot.png
-└── downloads/ (created at runtime)
+│           │   ├── components.py
+│           │   └── main_window.py
+│           └── utils/
+│               └── lazy_imports.py
+└── tests/              # Unit tests
+    ├── __init__.py
+    └── test_downloader.py
 ```
 
 ---
