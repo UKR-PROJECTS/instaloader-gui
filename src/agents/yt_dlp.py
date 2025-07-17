@@ -6,7 +6,7 @@ import os
 import json
 import subprocess
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Union
 
 from src.utils.lazy_imports import lazy_import_requests, lazy_import_moviepy
 from src.core.data_models import ReelItem
@@ -16,7 +16,7 @@ def download_reel(
     item: ReelItem,
     reel_number: int,
     session_folder: Path,
-    download_options: Dict[str, bool | str],
+    download_options: Dict[str, Union[bool, str]],
     progress_callback: Any,
 ) -> Dict[str, Any]:
     """
