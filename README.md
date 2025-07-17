@@ -49,6 +49,7 @@ insta-downloader-gui/
 ├── screenshots/
 ├── src/ 
 └── tests/         
+```
 
 ---
 
