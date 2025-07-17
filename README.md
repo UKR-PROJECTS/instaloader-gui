@@ -3,7 +3,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-green) ![Language: Python](https://img.shields.io/badge/Language-Python-blue) ![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen)
 
 <p align="center">
-  <img src="src/transcriptionEnabled/src/favicon.ico" alt="App Icon" width="64" height="64" />
+  <img src="src/favicon.ico" alt="App Icon" width="64" height="64" />
 </p>
 
 insta-downloader-gui is a powerful, open‑source desktop application built with PyQt6 to download Instagram Reels—including video, thumbnail, caption, and audio—in one click with batch queue support and efficient performance.
@@ -24,6 +24,7 @@ insta-downloader-gui is a powerful, open‑source desktop application built with
 - **Dual Download Engines**: Choose between `instaloader` and `yt-dlp`.
 - **Automatic Fallback**: Seamlessly switches engines on failure.
 - **Automatic yt-dlp Updates**: Checks for and installs the latest version of yt-dlp.
+- **Optional Audio Transcription**: Transcribe Reel audio to text using OpenAI Whisper.
 - Download Instagram Reels as `.mp4`.
 - Extract and save thumbnails as `.jpg`.
 - Save captions as `.txt`.
@@ -42,51 +43,12 @@ insta-downloader-gui/
 ├── CODE_OF_CONDUCT.md
 ├── CONTRIBUTING.md
 ├── LICENSE
+├── pyproject.toml
 ├── README.md
 ├── requirements.txt
-├── pyproject.toml
-├── src/
-│   ├── transcriptionEnabled/
-│   │   └── src/
-│   │       ├── main.py
-│   │       ├── updater.py
-│   │       ├── bin/
-│   │       ├── core/
-│   │       ├── ui/
-│   │       ├── utils/
-│   │       └── resources/
-│   └── transcriptionDisabled/
-│       └── src/
-│           ├── main.py
-│           ├── updater.py
-│           ├── bin/
-│           ├── core/
-│           ├── ui/
-│           ├── utils/
-│           └── resources/
-├── tests/
-│   └── test_downloader.py
 ├── screenshots/
-│   └── screenshot.png
-└── downloads/ (created at runtime)
-```
-
----
-
-## 📝 Transcription Enabled vs Disabled
-
-**Transcription Enabled**
-- Supports audio-to-text transcription using OpenAI Whisper.
-- Can generate and save transcript files (.txt) for downloaded Reels.
-- Requires the `openai-whisper` package (lazy loaded).
-- UI and results display transcript information if selected.
-- Suitable for users who want automatic speech-to-text for Reels' audio.
-
-**Transcription Disabled**
-- Does not include any audio transcription features.
-- Only downloads video, audio, thumbnails, and captions (no transcript files).
-- No dependency on Whisper or related code.
-- Lighter and simpler for users who do not need transcription.
+├── src/ 
+└── tests/         
 
 ---
 
@@ -132,7 +94,7 @@ pip install -r requirements.txt
 1. **Launch** the application:
 
    ```bash
-   python src\transcriptionDisabled\src\main.py or python src\transcriptionEnabled\src\main.py
+   python src/main.py
    ```
 
 2. **Add Reels**:

@@ -1,22 +1,17 @@
 import os
 import sys
 import unittest
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, MagicMock
 from pathlib import Path
 
-# Add the correct parent directory to the Python path to allow for 'from src...' imports
+# Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-# Determine which of the two 'src' parent directories to use
-# Add transcriptionEnabled src to path
-src_enabled_path = os.path.join(project_root, "src", "transcriptionEnabled")
-sys.path.insert(0, src_enabled_path)
-from src.core.downloader import ReelDownloader as ReelDownloaderEnabled
-from src.core.data_models import ReelItem
+sys.path.insert(0, project_root)
 
-# Add transcriptionDisabled src to path
-src_disabled_path = os.path.join(project_root, "src", "transcriptionDisabled")
-sys.path.insert(0, src_disabled_path)
-from src.core.downloader import ReelDownloader as ReelDownloaderDisabled
+from src.core.downloader import ReelDownloader
+from src.core.data_models import ReelItem
+from src.agents import instaloader as instaloader_agent
+from src.agents import yt_dlp as yt_dlp_agent
 
 
 class TestReelDownloader(unittest.TestCase):
@@ -25,154 +20,93 @@ class TestReelDownloader(unittest.TestCase):
     def setUp(self):
         """Set up the test environment."""
         self.reel_items = [ReelItem(url="https://www.instagram.com/reel/Cxyz123/")]
-        self.download_options_disabled = {
+        self.download_options: dict[str, bool | str] = {
             "video": True,
             "audio": True,
             "thumbnail": True,
             "caption": True,
+            "transcribe": False,
+            "downloader": "Instaloader",
         }
-        self.download_options_enabled = {
-            "video": True,
-            "audio": True,
-            "thumbnail": True,
-            "caption": True,
-            "transcribe": True,
-        }
-        self.downloader_disabled = ReelDownloaderDisabled(
-            self.reel_items, self.download_options_disabled
-        )
-        self.downloader_enabled = ReelDownloaderEnabled(
-            self.reel_items, self.download_options_enabled
-        )
+        self.downloader = ReelDownloader(self.reel_items, self.download_options)
+        # Mock the session folder to avoid creating it
+        self.downloader.session_folder = Path("test_downloads/session_123")
 
     def test_extract_shortcode_reel(self):
         """Test extracting a shortcode from a standard /reel/ URL."""
         url = "https://www.instagram.com/reel/Cxyz123/?utm_source=ig_web_copy_link"
-        shortcode = self.downloader_disabled._extract_shortcode(url)
+        shortcode = instaloader_agent._extract_shortcode(url)
         self.assertEqual(shortcode, "Cxyz123")
 
     def test_extract_shortcode_post(self):
         """Test extracting a shortcode from a /p/ URL."""
         url = "https://www.instagram.com/p/Cabc456/"
-        shortcode = self.downloader_disabled._extract_shortcode(url)
+        shortcode = instaloader_agent._extract_shortcode(url)
         self.assertEqual(shortcode, "Cabc456")
 
     def test_extract_shortcode_invalid(self):
         """Test that an invalid URL returns None."""
         url = "https://www.instagram.com/"
-        shortcode = self.downloader_disabled._extract_shortcode(url)
+        shortcode = instaloader_agent._extract_shortcode(url)
         self.assertIsNone(shortcode)
 
-    @patch("src.core.downloader.lazy_import_instaloader")
-    @patch("src.core.downloader.lazy_import_requests")
-    @patch("src.core.downloader.lazy_import_moviepy")
-    @patch("src.core.downloader.Path.mkdir")
-    @patch("builtins.open", new_callable=mock_open)
-    def test_download_process_calls_disabled(
-        self, mock_open_file, mock_mkdir, mock_moviepy, mock_requests, mock_instaloader
+    @patch("src.core.downloader.ReelDownloader._download_with_yt_dlp")
+    @patch("src.core.downloader.ReelDownloader._download_with_instaloader")
+    def test_download_process_calls_instaloader(
+        self, mock_instaloader_download, mock_yt_dlp_download
     ):
-        """Test that the main download process calls the correct helper methods for the disabled version."""
-        # Mock the external libraries and their return values
-        mock_instaloader.return_value.Instaloader.return_value.context = MagicMock()
-        mock_post = MagicMock()
-        mock_post.video_url = "http://fake.url/video.mp4"
-        mock_post.thumbnail_url = "http://fake.url/thumb.jpg"
-        mock_post.caption = "Fake caption"
-        mock_instaloader.return_value.Post.from_shortcode.return_value = mock_post
+        """Test that the main download process calls the instaloader agent."""
+        self.downloader.download_options["downloader"] = "Instaloader"
+        mock_instaloader_download.return_value = {"status": "success"}
+        self.downloader._process_downloads()
+        mock_instaloader_download.assert_called_once()
+        mock_yt_dlp_download.assert_not_called()
 
-        mock_requests.return_value.get.return_value.iter_content.return_value = [
-            b"fakedata"
-        ]
-
-        # Mock moviepy to avoid actual processing
-        mock_video_clip = MagicMock()
-        mock_audio_clip = MagicMock()
-        mock_video_clip.audio = mock_audio_clip
-        mock_moviepy.return_value.return_value = mock_video_clip
-
-        # Mock the downloader's own methods to check if they are called
-        self.downloader_disabled._download_video = MagicMock()
-        self.downloader_disabled._download_thumbnail = MagicMock()
-        self.downloader_disabled._extract_audio = MagicMock()
-        self.downloader_disabled._save_caption = MagicMock()
-
-        # Run the main thread logic
-        self.downloader_disabled.run()
-
-        # Assert that the setup methods were called
-        self.assertTrue(mock_mkdir.called)
-
-        # Assert that the download helper methods were called
-        self.downloader_disabled._download_video.assert_called_once()
-        self.downloader_disabled._download_thumbnail.assert_called_once()
-        self.downloader_disabled._extract_audio.assert_called_once()
-        self.downloader_disabled._save_caption.assert_called_once()
-
-    @patch("src.core.downloader.lazy_import_instaloader")
-    @patch("src.core.downloader.lazy_import_requests")
-    @patch("src.core.downloader.lazy_import_moviepy")
-    @patch("src.core.downloader.lazy_import_whisper")
-    @patch("src.core.downloader.Path.mkdir")
-    @patch("builtins.open", new_callable=mock_open)
-    def test_download_process_calls_enabled(
-        self,
-        mock_open_file,
-        mock_mkdir,
-        mock_whisper,
-        mock_moviepy,
-        mock_requests,
-        mock_instaloader,
+    @patch("src.core.downloader.ReelDownloader._download_with_yt_dlp")
+    @patch("src.core.downloader.ReelDownloader._download_with_instaloader")
+    def test_download_process_calls_yt_dlp(
+        self, mock_instaloader_download, mock_yt_dlp_download
     ):
-        """Test that the main download process calls the correct helper methods for the enabled version."""
-        # Mock the external libraries and their return values
-        mock_instaloader.return_value.Instaloader.return_value.context = MagicMock()
-        mock_post = MagicMock()
-        mock_post.video_url = "http://fake.url/video.mp4"
-        mock_post.thumbnail_url = "http://fake.url/thumb.jpg"
-        mock_post.caption = "Fake caption"
-        mock_instaloader.return_value.Post.from_shortcode.return_value = mock_post
+        """Test that the main download process calls the yt-dlp agent."""
+        self.downloader.download_options["downloader"] = "yt-dlp"
+        mock_yt_dlp_download.return_value = {"status": "success"}
+        self.downloader._process_downloads()
+        mock_yt_dlp_download.assert_called_once()
+        mock_instaloader_download.assert_not_called()
 
-        mock_requests.return_value.get.return_value.iter_content.return_value = [
-            b"fakedata"
-        ]
-
-        # Mock moviepy to avoid actual processing
-        mock_video_clip = MagicMock()
-        mock_audio_clip = MagicMock()
-        mock_video_clip.audio = mock_audio_clip
-        mock_moviepy.return_value.return_value = mock_video_clip
-
-        # Mock whisper
-        mock_whisper.return_value.load_model.return_value.transcribe.return_value = {
-            "text": "fake transcript"
+    @patch("src.core.downloader.ReelDownloader._download_with_yt_dlp")
+    @patch("src.core.downloader.ReelDownloader._download_with_instaloader")
+    def test_download_process_calls_with_transcription(
+        self, mock_instaloader_download, mock_yt_dlp_download
+    ):
+        """Test that the main download process calls the transcription method when enabled."""
+        self.downloader.download_options["transcribe"] = True
+        mock_instaloader_download.return_value = {
+            "status": "success",
+            "folder_path": "test_folder",
         }
 
-        # Mock the downloader's own methods to check if they are called
-        self.downloader_enabled._download_video = MagicMock()
-        self.downloader_enabled._download_thumbnail = MagicMock()
-        self.downloader_enabled._extract_audio = MagicMock()
-        self.downloader_enabled._save_caption = MagicMock()
-        self.downloader_enabled._transcribe_audio = MagicMock()
+        # Create a mock for _handle_transcription
+        with patch.object(
+            self.downloader, "_handle_transcription"
+        ) as mock_transcription:
+            self.downloader._process_downloads()
+            mock_instaloader_download.assert_called_once()
+            mock_yt_dlp_download.assert_not_called()
+            mock_transcription.assert_called_once_with(
+                {"status": "success", "folder_path": "test_folder"}, 1
+            )
 
-        # Run the main thread logic
-        self.downloader_enabled.run()
-
-        # Assert that the setup methods were called
-        self.assertTrue(mock_mkdir.called)
-
-        # Assert that the download helper methods were called
-        self.downloader_enabled._download_video.assert_called_once()
-        self.downloader_enabled._download_thumbnail.assert_called_once()
-        self.downloader_enabled._extract_audio.assert_called_once()
-        self.downloader_enabled._save_caption.assert_called_once()
-        self.downloader_enabled._transcribe_audio.assert_called_once()
-
-    @patch("src.core.downloader.Path.exists", return_value=False)
-    def test_yt_dlp_not_found(self, mock_exists):
-        """Test that FileNotFoundError is raised if yt-dlp.exe is not found."""
-        self.downloader_disabled._setup_session()
-        with self.assertRaises(FileNotFoundError):
-            self.downloader_disabled._download_with_yt_dlp(self.reel_items[0], 1)
+    @patch(
+        "src.core.downloader.ReelDownloader._download_with_instaloader",
+        side_effect=Exception("Instaloader failed"),
+    )
+    @patch("src.core.downloader.ReelDownloader._download_with_yt_dlp")
+    def test_fallback_mechanism(self, mock_yt_dlp_download, mock_instaloader_download):
+        """Test that the downloader falls back to the secondary agent on failure."""
+        self.downloader._process_downloads()
+        mock_instaloader_download.assert_called_once()
+        mock_yt_dlp_download.assert_called_once()
 
 
 if __name__ == "__main__":

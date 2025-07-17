@@ -36,4 +36,4 @@ dependencies = [
 "Bug Tracker" = "https://github.com/ukr-projects/insta-downloader-gui/issues"
 
 [tool.setuptools.packages.find]
-where = ["src/transcriptionDisabled/src", "src/transcriptionEnabled/src"]
+where = ["src"]
