@@ -23,7 +23,7 @@ and resource cleanup.
 
 import os
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
 from PyQt6.QtCore import QThread, pyqtSignal
 
@@ -32,6 +32,7 @@ from src.utils.lazy_imports import (
     lazy_import_instaloader,
     lazy_import_moviepy,
     lazy_import_whisper,
+    lazy_import_requests,
 )
 from src.agents import instaloader as instaloader_agent
 from src.agents import yt_dlp as yt_dlp_agent
@@ -53,7 +54,7 @@ class ReelDownloader(QThread):
     error_occurred = pyqtSignal(str, str)  # url, error_message
 
     def __init__(
-        self, reel_items: List[ReelItem], download_options: Dict[str, bool | str]
+        self, reel_items: List[ReelItem], download_options: Dict[str, Union[bool, str]]
     ):
         """
         Initialize downloader thread
@@ -92,22 +93,15 @@ class ReelDownloader(QThread):
                 whisper_module = lazy_import_whisper()
                 import sys
 
-                # Get correct base path for both dev and packaged environments
                 if getattr(sys, "frozen", False):
                     base_path = Path(sys._MEIPASS)  # type: ignore
-                    print(f"Frozen environment: base_path = {base_path}")
                 else:
                     base_path = Path(__file__).parent.parent
-                    print(f"Dev environment: base_path = {base_path}")
 
                 model_path = base_path / "whisper" / "base.pt"
-                print(f"Loading Whisper model from: {model_path}")
-                print(f"Model exists: {model_path.exists()}")
 
-                # Check file size to verify it's not empty
-                if model_path.exists():
-                    size = model_path.stat().st_size
-                    print(f"Model file size: {size} bytes")
+                if not model_path.exists():
+                    self._download_whisper_model(model_path)
 
                 self.whisper_model = whisper_module.load_model(str(model_path), device="cpu")  # type: ignore
                 print("Whisper model loaded successfully")
@@ -123,6 +117,41 @@ class ReelDownloader(QThread):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.session_folder = Path("downloads") / f"session_{timestamp}"
         self.session_folder.mkdir(parents=True, exist_ok=True)
+
+    def _download_whisper_model(self, model_path: Path):
+        """Download whisper model with progress"""
+        requests = lazy_import_requests()
+        model_url = "https://openaipublic.azureedge.net/main/whisper/models/ed3a0b6b1c0edf879ad9b11b1af5a0e6ab5db9205f891f668f8b0e6c6326e34e/base.pt"
+
+        self.progress_updated.emit("", 0, "Downloading Whisper model...")
+
+        try:
+            with requests.get(model_url, stream=True) as r:
+                r.raise_for_status()
+                total_size = int(r.headers.get("content-length", 0))
+
+                model_path.parent.mkdir(parents=True, exist_ok=True)
+
+                with open(model_path, "wb") as f:
+                    downloaded = 0
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                        downloaded += len(chunk)
+                        if total_size > 0:
+                            progress = (downloaded / total_size) * 100
+                            self.progress_updated.emit(
+                                "",
+                                int(progress),
+                                f"Downloading model... {progress:.2f}%",
+                            )
+
+            self.progress_updated.emit("", 100, "Model download complete.")
+
+        except Exception as e:
+            self.error_occurred.emit("", f"Failed to download Whisper model: {e}")
+            if model_path.exists():
+                os.remove(model_path)  # Clean up partial download
+            raise
 
     def _setup_instaloader(self):
         """Initialize Instaloader with optimal settings"""
