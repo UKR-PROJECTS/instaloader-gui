@@ -41,6 +41,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 from PyQt6.QtGui import QIcon
+import requests
 
 # Set the current working directory to the script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -59,6 +60,21 @@ def main():
         sys.stdout = open(log_path, "w")
         sys.stderr = sys.stdout
         print(f"Logging started at {datetime.now()}")
+
+    # Download whisper model if not present
+    whisper_model_path = Path(__file__).parent / "whisper" / "base.pt"
+    if not whisper_model_path.exists():
+        print("Downloading whisper model...")
+        whisper_model_path.parent.mkdir(parents=True, exist_ok=True)
+        url = "https://openaipublic.azureedge.net/main/whisper/models/ed3a0b6b1c0edf879ad9b11b1af5a0e6ab5db9205f891f668f8b0e6c6326e34e/base.pt"
+        try:
+            r = requests.get(url, allow_redirects=True, timeout=60)
+            r.raise_for_status()
+            with open(whisper_model_path, "wb") as f:
+                f.write(r.content)
+            print("Whisper model downloaded.")
+        except requests.exceptions.RequestException as e:
+            print(f"Error downloading whisper model: {e}")
 
     app = QApplication(sys.argv)
     app.setApplicationName("insta-downloader-gui")

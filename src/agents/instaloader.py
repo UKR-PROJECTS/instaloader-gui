@@ -4,7 +4,7 @@ Instaloader Agent: Handles all downloading operations using the Instaloader libr
 
 import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Union
 
 from src.utils.lazy_imports import (
     lazy_import_instaloader,
@@ -19,7 +19,7 @@ def download_reel(
     reel_number: int,
     session_folder: Path,
     loader: Any,
-    download_options: Dict[str, bool | str],
+    download_options: Dict[str, Union[bool, str]],
     progress_callback: Any,
 ) -> Dict[str, Any]:
     """

@@ -20,6 +20,19 @@ _requests = None
 _PIL = None
 
 
+def lazy_import_requests():
+    """Lazy import requests when needed"""
+    global _requests
+    if _requests is None:
+        try:
+            import requests
+
+            _requests = requests
+        except ImportError as e:
+            raise ImportError(f"Missing requests package: {e}")
+    return _requests
+
+
 def lazy_import_instaloader():
     """Lazy import instaloader when needed"""
     global _instaloader
@@ -57,19 +70,6 @@ def lazy_import_whisper():
         except ImportError as e:
             raise ImportError(f"Missing whisper package: {e}")
     return _whisper
-
-
-def lazy_import_requests():
-    """Lazy import requests when needed"""
-    global _requests
-    if _requests is None:
-        try:
-            import requests
-
-            _requests = requests
-        except ImportError as e:
-            raise ImportError(f"Missing requests package: {e}")
-    return _requests
 
 
 def lazy_import_pil():
