@@ -167,6 +167,13 @@ class TestReelDownloader(unittest.TestCase):
         self.downloader_enabled._save_caption.assert_called_once()
         self.downloader_enabled._transcribe_audio.assert_called_once()
 
+    @patch("src.core.downloader.Path.exists", return_value=False)
+    def test_yt_dlp_not_found(self, mock_exists):
+        """Test that FileNotFoundError is raised if yt-dlp.exe is not found."""
+        self.downloader_disabled._setup_session()
+        with self.assertRaises(FileNotFoundError):
+            self.downloader_disabled._download_with_yt_dlp(self.reel_items[0], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

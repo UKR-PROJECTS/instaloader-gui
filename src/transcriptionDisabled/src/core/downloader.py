@@ -60,8 +60,8 @@ class ReelDownloader(QThread):
         self.reel_items = reel_items
         self.download_options = download_options
         self.is_running = True
-        self.session_folder = None
-        self.loader = None
+        self.session_folder: Optional[Path] = None
+        self.loader: Optional[Any] = None
 
     def run(self):
         """Main download thread execution with lazy loading"""
@@ -147,6 +147,8 @@ class ReelDownloader(QThread):
         temp_video_path = None
 
         try:
+            assert self.loader is not None, "Instaloader not initialized"
+            assert self.session_folder is not None, "Session folder not created"
             # Validate URL and extract shortcode
             shortcode = self._extract_shortcode(item.url)
             if not shortcode:
@@ -189,6 +191,7 @@ class ReelDownloader(QThread):
         import subprocess
 
         result = {}
+        assert self.session_folder is not None, "Session folder not created"
         reel_folder = self.session_folder / f"reel{reel_number}"
         reel_folder.mkdir(exist_ok=True)
         result["folder_path"] = str(reel_folder)
@@ -357,73 +360,6 @@ class ReelDownloader(QThread):
 
             except Exception as e:
                 print(f"Caption save failed: {e}")
-
-    def _transcribe_audio(self, reel_folder: Path, reel_number: int, result: Dict):
-        """Transcribe audio using Whisper if enabled"""
-        if not (self.download_options.get("transcribe", False) and self.whisper_model):
-            return
-
-        self.progress_updated.emit("", 90, "Transcribing audio...")
-
-        # Use existing audio file or extract temporarily
-        audio_source = result.get("audio_path")
-        temp_audio_path = None
-
-        if not audio_source:
-            audio_source, temp_audio_path = self._extract_temp_audio(
-                reel_folder, reel_number, result
-            )
-
-        if not (audio_source and os.path.exists(audio_source)):
-            return
-
-        try:
-            transcript_result = self.whisper_model.transcribe(audio_source)
-            transcript_text = transcript_result["text"]
-            result["transcript"] = transcript_text
-
-            transcript_path = reel_folder / f"transcript{reel_number}.txt"
-            with open(transcript_path, "w", encoding="utf-8") as f:
-                f.write(transcript_text)
-            result["transcript_path"] = str(transcript_path)
-
-        except Exception as e:
-            result["transcript"] = f"Transcription failed: {str(e)}"
-
-        finally:
-            # Cleanup temporary audio file
-            if temp_audio_path and os.path.exists(temp_audio_path):
-                self._safe_file_removal(temp_audio_path)
-
-    def _extract_temp_audio(self, reel_folder: Path, reel_number: int, result: Dict):
-        """Extract audio temporarily for transcription"""
-        video_path = result.get("video_path") or str(
-            reel_folder / f"video{reel_number}.mp4"
-        )
-        temp_audio_path = str(reel_folder / f"temp_audio{reel_number}.mp3")
-
-        if not os.path.exists(video_path):
-            return None, None
-
-        video_clip = None
-        audio_clip = None
-
-        try:
-            # Lazy load moviepy
-            VideoFileClip = lazy_import_moviepy()
-            video_clip = VideoFileClip(video_path)
-            if video_clip.audio is not None:
-                audio_clip = video_clip.audio
-                audio_clip.write_audiofile(temp_audio_path, verbose=False, logger=None)
-                return temp_audio_path, temp_audio_path
-
-        except Exception as e:
-            print(f"Temporary audio extraction failed: {e}")
-
-        finally:
-            self._cleanup_video_resources(audio_clip, video_clip)
-
-        return None, None
 
     def _cleanup_video_resources(self, audio_clip, video_clip):
         """Safely cleanup video and audio resources"""

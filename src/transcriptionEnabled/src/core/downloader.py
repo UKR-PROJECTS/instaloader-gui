@@ -64,9 +64,9 @@ class ReelDownloader(QThread):
         self.reel_items = reel_items
         self.download_options = download_options
         self.is_running = True
-        self.whisper_model = None
-        self.session_folder = None
-        self.loader = None
+        self.whisper_model: Optional[Any] = None
+        self.session_folder: Optional[Path] = None
+        self.loader: Optional[Any] = None
 
     def run(self):
         """Main download thread execution with lazy loading"""
@@ -162,6 +162,8 @@ class ReelDownloader(QThread):
         temp_video_path = None
 
         try:
+            assert self.loader is not None, "Instaloader not initialized"
+            assert self.session_folder is not None, "Session folder not created"
             # Validate URL and extract shortcode
             shortcode = self._extract_shortcode(item.url)
             if not shortcode:
@@ -205,6 +207,7 @@ class ReelDownloader(QThread):
         import subprocess
 
         result = {}
+        assert self.session_folder is not None, "Session folder not created"
         reel_folder = self.session_folder / f"reel{reel_number}"
         reel_folder.mkdir(exist_ok=True)
         result["folder_path"] = str(reel_folder)
