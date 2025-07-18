@@ -39,23 +39,32 @@ def get_resource_path(relative_path: str) -> Path:
     Returns:
         Path: The absolute Path object to the requested resource.
     """
+    # Check if running as a frozen executable (e.g., PyInstaller)
     if getattr(sys, "frozen", False):
-        # Application is running as a frozen executable (e.g., PyInstaller)
+        # Base path of the executable
+        executable_dir = Path(sys.executable).parent
+
+        # Special handling for the 'whisper' directory in frozen state
+        if relative_path.startswith("whisper"):
+            whisper_path = executable_dir / "whisper"
+            if whisper_path.exists():
+                # If a 'whisper' folder exists next to the exe, use it
+                # and append the rest of the relative path.
+                return executable_dir / relative_path
+
+        # For one-file bundles, resources are in a temporary directory (_MEIPASS)
         if hasattr(sys, "_MEIPASS"):
-            # One-file bundle: resources are in a temporary directory
-            base_path = Path(sys._MEIPASS)
-            # For some external binaries (like yt-dlp.exe), they might be placed
-            # directly next to the executable, not inside _MEIPASS.
-            # We check for this specific case.
-            external_path = Path(sys.executable).parent / relative_path
+            # Check if the resource exists next to the executable (e.g., config files)
+            external_path = executable_dir / relative_path
             if external_path.exists():
                 return external_path
+            # Otherwise, fall back to the temporary _MEIPASS directory
+            return Path(sys._MEIPASS) / relative_path
         else:
-            # One-folder bundle: resources are in the same directory as the executable
-            base_path = Path(sys.executable).parent
+            # For one-folder bundles, resources are in the same directory as the executable
+            return executable_dir / relative_path
     else:
         # Application is running from source code
         # Assumes this file is located at `src/utils/resource_loader.py`
         base_path = Path(__file__).resolve().parent.parent
-
-    return base_path / relative_path
+        return base_path / relative_path
