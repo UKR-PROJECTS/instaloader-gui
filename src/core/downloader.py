@@ -4,18 +4,16 @@ ReelDownloader: Instagram Reel Download and Processing Thread
 This module defines the ReelDownloader class, a QThread-based background worker for downloading
 Instagram reels and associated media (video, thumbnail, audio, captions, and transcripts).
 It supports lazy loading of heavy dependencies (instaloader, moviepy, whisper, requests) to optimize
-startup time and memory usage. The downloader can extract audio, save captions, and transcribe audio
-using OpenAI's Whisper model if enabled in the download options.
+startup time and memory usage.
 
 Features:
-- Dual download engines: yt-dlp and instaloader.
-- Automatic fallback to the secondary downloader if the primary one fails.
+- Dual download engines: yt-dlp and instaloader, with automatic fallback.
 - User-selectable preferred downloader.
-- Download Instagram reels (video and thumbnail) to organized session folders
-- Extract and save audio from reels
-- Save captions and generate transcripts using Whisper
-- Emits Qt signals for progress updates, completion, and error handling
-- Designed for integration with PyQt6 GUI applications
+- Downloads Instagram reels (video and thumbnail) to organized session folders.
+- Extracts and saves audio from reels.
+- Saves captions and generates transcripts using OpenAI's Whisper model.
+- Emits Qt signals for progress updates, completion, and error handling.
+- Designed for integration with PyQt6 GUI applications.
 
 Dependencies are loaded only when required, and all file operations are handled with error checking
 and resource cleanup.
@@ -23,58 +21,70 @@ and resource cleanup.
 
 import os
 from pathlib import Path
-from typing import List, Optional, Dict, Any, Union
-from datetime import datetime
+from typing import List, Dict, Any, Union
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from src.core.data_models import ReelItem
-from src.utils.lazy_imports import (
-    lazy_import_instaloader,
-    lazy_import_moviepy,
-    lazy_import_whisper,
-    lazy_import_requests,
-)
+from src.utils.lazy_imports import lazy_import_instaloader
 from src.agents import instaloader as instaloader_agent
 from src.agents import yt_dlp as yt_dlp_agent
+from src.core.transcriber import AudioTranscriber
+from src.core.session_manager import SessionManager
 
 
 class ReelDownloader(QThread):
     """
-    Background thread for downloading Instagram reels with lazy loading
+    Background thread for downloading Instagram reels.
+
+    This thread manages the download process, including selecting the appropriate
+    downloader agent (Instaloader or yt-dlp), handling progress updates,
+    and managing errors. It also integrates with the audio transcriber.
 
     Signals:
-        progress_updated: Emitted when download progress changes
-        download_completed: Emitted when a download finishes successfully
-        error_occurred: Emitted when an error occurs during download
+        progress_updated(str, int, str): Emitted when download progress changes.
+                                         Args: url, progress percentage, status message.
+        download_completed(str, dict): Emitted when a download finishes successfully.
+                                       Args: url, dictionary of result data (file paths, etc.).
+        error_occurred(str, str): Emitted when an error occurs during download.
+                                  Args: url, error message.
     """
 
-    # Signal definitions
-    progress_updated = pyqtSignal(str, int, str)  # url, progress, status
-    download_completed = pyqtSignal(str, dict)  # url, result_data
-    error_occurred = pyqtSignal(str, str)  # url, error_message
+    progress_updated = pyqtSignal(str, int, str)
+    download_completed = pyqtSignal(str, dict)
+    error_occurred = pyqtSignal(str, str)
 
     def __init__(
         self, reel_items: List[ReelItem], download_options: Dict[str, Union[bool, str]]
     ):
         """
-        Initialize downloader thread
+        Initializes the ReelDownloader thread.
 
         Args:
-            reel_items: List of reels to download
-            download_options: Dictionary of download preferences
+            reel_items: A list of ReelItem objects to be downloaded.
+            download_options: A dictionary containing download preferences,
+                              e.g., whether to download video, audio, caption,
+                              transcribe, and preferred downloader.
         """
         super().__init__()
         self.reel_items = reel_items
         self.download_options = download_options
         self.is_running = True
-        self.whisper_model: Optional[Any] = None
-        self.session_folder: Optional[Path] = None
-        self.loader: Optional[Any] = None
+        self.session_manager = SessionManager()
+        self.audio_transcriber = AudioTranscriber()
+        self.loader: Any = (
+            None  # Instaloader instance, initialized in _setup_instaloader
+        )
 
     def run(self):
-        """Main download thread execution with lazy loading"""
+        """
+        The main entry point for the thread's execution.
+
+        Sets up the session folder, lazily loads necessary dependencies,
+        initializes Instaloader, and processes all reel downloads in the queue.
+        Emits an error_occurred signal if a critical thread error occurs.
+        """
         try:
-            self._setup_session()
+            self.session_manager.setup_session_folder()
             self._lazy_load_dependencies()
             self._setup_instaloader()
             self._process_downloads()
@@ -83,78 +93,24 @@ class ReelDownloader(QThread):
             self.error_occurred.emit("", f"Thread error: {str(e)}")
 
     def _lazy_load_dependencies(self):
-        """Load dependencies only when needed"""
+        """
+        Lazily loads heavy dependencies like Whisper model if transcription is enabled.
+
+        Emits progress updates during the loading process.
+        """
         self.progress_updated.emit("", 0, "Loading dependencies...")
 
-        # Load whisper only if transcription is enabled
         if self.download_options.get("transcribe", False):
-            self.progress_updated.emit("", 5, "Loading Whisper model...")
-            try:
-                whisper_module = lazy_import_whisper()
-                import sys
-
-                if getattr(sys, "frozen", False):
-                    base_path = Path(sys._MEIPASS)  # type: ignore
-                else:
-                    base_path = Path(__file__).parent.parent
-
-                model_path = base_path / "whisper" / "base.pt"
-
-                if not model_path.exists():
-                    self._download_whisper_model(model_path)
-
-                self.whisper_model = whisper_module.load_model(str(model_path), device="cpu")  # type: ignore
-                print("Whisper model loaded successfully")
-            except Exception as e:
-                print(f"Failed to load Whisper model: {e}")
-                import traceback
-
-                traceback.print_exc()
-                self.whisper_model = None
-
-    def _setup_session(self):
-        """Create timestamped session folder for downloads"""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.session_folder = Path("downloads") / f"session_{timestamp}"
-        self.session_folder.mkdir(parents=True, exist_ok=True)
-
-    def _download_whisper_model(self, model_path: Path):
-        """Download whisper model with progress"""
-        requests = lazy_import_requests()
-        model_url = "https://openaipublic.azureedge.net/main/whisper/models/ed3a0b6b1c0edf879ad9b11b1af5a0e6ab5db9205f891f668f8b0e6c6326e34e/base.pt"
-
-        self.progress_updated.emit("", 0, "Downloading Whisper model...")
-
-        try:
-            with requests.get(model_url, stream=True) as r:
-                r.raise_for_status()
-                total_size = int(r.headers.get("content-length", 0))
-
-                model_path.parent.mkdir(parents=True, exist_ok=True)
-
-                with open(model_path, "wb") as f:
-                    downloaded = 0
-                    for chunk in r.iter_content(chunk_size=8192):
-                        f.write(chunk)
-                        downloaded += len(chunk)
-                        if total_size > 0:
-                            progress = (downloaded / total_size) * 100
-                            self.progress_updated.emit(
-                                "",
-                                int(progress),
-                                f"Downloading model... {progress:.2f}%",
-                            )
-
-            self.progress_updated.emit("", 100, "Model download complete.")
-
-        except Exception as e:
-            self.error_occurred.emit("", f"Failed to download Whisper model: {e}")
-            if model_path.exists():
-                os.remove(model_path)  # Clean up partial download
-            raise
+            self.audio_transcriber.load_whisper_model(self.progress_updated.emit)
 
     def _setup_instaloader(self):
-        """Initialize Instaloader with optimal settings"""
+        """
+        Initializes the Instaloader instance with optimal settings for downloading.
+
+        This method is called only if Instaloader is chosen as the primary or fallback
+        downloader. It configures Instaloader to download video thumbnails,
+        and disables comments and metadata saving to reduce overhead.
+        """
         self.progress_updated.emit("", 10, "Setting up downloader...")
         instaloader_module = lazy_import_instaloader()
 
@@ -163,11 +119,18 @@ class ReelDownloader(QThread):
             download_comments=False,
             save_metadata=False,
             compress_json=False,
-            dirname_pattern=str(self.session_folder),
+            dirname_pattern=str(self.session_manager.get_session_folder()),
         )
 
     def _process_downloads(self):
-        """Process all downloads in the queue"""
+        """
+        Iterates through the list of reel items and processes each download.
+
+        It attempts to download each reel using the preferred downloader,
+        and falls back to the secondary downloader if the primary one fails.
+        Handles transcription if enabled and emits appropriate signals for
+        completion or errors.
+        """
         for i, item in enumerate(self.reel_items, 1):
             if not self.is_running:
                 break
@@ -197,11 +160,22 @@ class ReelDownloader(QThread):
                     item.url, 0, f"Starting download with {primary_agent_name}..."
                 )
                 result = primary_agent(item, i)
-                # Handle transcription after successful download
                 if self.download_options.get("transcribe", False):
-                    self._handle_transcription(result, i)
+                    try:
+                        reel_folder = Path(result["folder_path"])
+                        self.audio_transcriber.transcribe_audio_from_reel(
+                            reel_folder, i, result, self.progress_updated.emit
+                        )
+                    except Exception as e:
+                        error_msg = f"Transcription failed: {str(e)}"
+                        result["transcript"] = error_msg
+                        self.progress_updated.emit(item.url, 0, error_msg)
+                        print(f"Transcription error: {e}")
+                        import traceback
+
+                        traceback.print_exc()
                 self.download_completed.emit(item.url, result)
-                continue  # Move to next item
+                continue
             except Exception as e:
                 primary_error = e
                 self.progress_updated.emit(
@@ -212,9 +186,11 @@ class ReelDownloader(QThread):
 
             try:
                 result = fallback_agent(item, i)
-                # Handle transcription after successful download
                 if self.download_options.get("transcribe", False):
-                    self._handle_transcription(result, i)
+                    reel_folder = Path(result["folder_path"])
+                    self.audio_transcriber.transcribe_audio_from_reel(
+                        reel_folder, i, result, self.progress_updated.emit
+                    )
                 self.download_completed.emit(item.url, result)
             except Exception as e2:
                 error_msg = f"Both downloaders failed: {primary_error} | {e2}"
@@ -223,130 +199,61 @@ class ReelDownloader(QThread):
     def _download_with_instaloader(
         self, item: ReelItem, reel_number: int
     ) -> Dict[str, Any]:
-        """Download a reel using the Instaloader agent."""
-        if not self.session_folder:
+        """
+        Initiates a reel download using the Instaloader agent.
+
+        Args:
+            item: The ReelItem object to download.
+            reel_number: The sequential number of the reel in the current session.
+
+        Returns:
+            A dictionary containing the download results from the Instaloader agent.
+
+        Raises:
+            ValueError: If the session folder is not initialized.
+        """
+        session_folder = self.session_manager.get_session_folder()
+        if not session_folder:
             raise ValueError("Session folder is not initialized.")
         return instaloader_agent.download_reel(
             item,
             reel_number,
-            self.session_folder,
+            session_folder,
             self.loader,
             self.download_options,
             self.progress_updated.emit,
         )
 
     def _download_with_yt_dlp(self, item: ReelItem, reel_number: int) -> Dict[str, Any]:
-        """Download a reel using the yt-dlp agent."""
-        if not self.session_folder:
+        """
+        Initiates a reel download using the yt-dlp agent.
+
+        Args:
+            item: The ReelItem object to download.
+            reel_number: The sequential number of the reel in the current session.
+
+        Returns:
+            A dictionary containing the download results from the yt-dlp agent.
+
+        Raises:
+            ValueError: If the session folder is not initialized.
+        """
+        session_folder = self.session_manager.get_session_folder()
+        if not session_folder:
             raise ValueError("Session folder is not initialized.")
         return yt_dlp_agent.download_reel(
             item,
             reel_number,
-            self.session_folder,
+            session_folder,
             self.download_options,
             self.progress_updated.emit,
         )
 
-    def _handle_transcription(self, result: Dict[str, Any], reel_number: int):
-        """Handle audio transcription if enabled."""
-        if self.download_options.get("transcribe"):
-            reel_folder = Path(result["folder_path"])
-            self._transcribe_audio(reel_folder, reel_number, result)
-
-    def _transcribe_audio(self, reel_folder: Path, reel_number: int, result: Dict):
-        """Transcribe audio using Whisper if enabled"""
-        if not (self.download_options.get("transcribe", False) and self.whisper_model):
-            return
-
-        self.progress_updated.emit("", 90, "Transcribing audio...")
-
-        # Use existing audio file or extract temporarily
-        audio_source = result.get("audio_path")
-        temp_audio_path = None
-
-        if not audio_source:
-            audio_source, temp_audio_path = self._extract_temp_audio(
-                reel_folder, reel_number, result
-            )
-
-        if not (audio_source and os.path.exists(audio_source)):
-            return
-
-        try:
-            print(f"Starting transcription of {audio_source}")
-            transcript_result = self.whisper_model.transcribe(audio_source)
-            transcript_text = transcript_result["text"]
-            print(f"Transcription successful: {transcript_text[:50]}...")
-            result["transcript"] = transcript_text
-
-            transcript_path = reel_folder / f"transcript{reel_number}.txt"
-            with open(transcript_path, "w", encoding="utf-8") as f:
-                f.write(transcript_text)
-            result["transcript_path"] = str(transcript_path)
-
-        except Exception as e:
-            print(f"Transcription error: {e}")
-            import traceback
-
-            traceback.print_exc()
-            result["transcript"] = f"Transcription failed: {str(e)}"
-
-        finally:
-            # Cleanup temporary audio file
-            if temp_audio_path and os.path.exists(temp_audio_path):
-                self._safe_file_removal(temp_audio_path)
-
-    def _extract_temp_audio(self, reel_folder: Path, reel_number: int, result: Dict):
-        """Extract audio temporarily for transcription"""
-        video_path = result.get("video_path") or str(
-            reel_folder / f"video{reel_number}.mp4"
-        )
-        temp_audio_path = str(reel_folder / f"temp_audio{reel_number}.mp3")
-
-        if not os.path.exists(video_path):
-            return None, None
-
-        video_clip = None
-        audio_clip = None
-
-        try:
-            # Lazy load moviepy
-            VideoFileClip = lazy_import_moviepy()
-            video_clip = VideoFileClip(video_path)
-            if video_clip.audio is not None:
-                audio_clip = video_clip.audio
-                audio_clip.write_audiofile(temp_audio_path, verbose=False, logger=None)
-                return temp_audio_path, temp_audio_path
-
-        except Exception as e:
-            print(f"Temporary audio extraction failed: {e}")
-
-        finally:
-            self._cleanup_video_resources(audio_clip, video_clip)
-
-        return None, None
-
-    def _cleanup_video_resources(self, audio_clip, video_clip):
-        """Safely cleanup video and audio resources"""
-        if audio_clip:
-            try:
-                audio_clip.close()
-            except Exception:
-                pass
-
-        if video_clip:
-            try:
-                video_clip.close()
-            except Exception:
-                pass
-
-    def _safe_file_removal(self, file_path: str):
-        """Safely remove a file with error handling"""
-        try:
-            os.remove(file_path)
-        except OSError as e:
-            print(f"Could not remove file {file_path}: {e}")
-
     def stop(self):
-        """Stop the download thread gracefully"""
+        """
+        Stops the download thread gracefully.
+
+        Sets an internal flag to False, allowing the `run` method's loop
+        to terminate on its next iteration.
+        """
         self.is_running = False

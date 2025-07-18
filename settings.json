@@ -1,0 +1,10 @@
+{
+  "ui_settings": {
+    "video": true,
+    "thumbnail": true,
+    "audio": true,
+    "caption": true,
+    "transcribe": true,
+    "downloader": "yt-dlp"
+  }
+}

@@ -1,81 +1,73 @@
 """
-This module defines a custom QPushButton subclass, ModernButton, which provides a visually appealing,
-modern-styled button for PyQt/PySide applications. The button features a gradient background, rounded corners,
-custom font, and interactive hover/pressed/disabled states for enhanced user experience.
+This module defines custom PyQt widgets with modern styling.
 
-Class ModernButton: A QPushButton with a modern gradient design and improved styling.
+It includes:
+- `ModernButton`: A custom QPushButton with a gradient background, rounded corners,
+  and interactive hover/pressed/disabled states.
+- `ModernProgressBar`: A custom QProgressBar with a modern design.
 """
 
 from PyQt6.QtWidgets import QPushButton, QProgressBar
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
+from src.ui.styles import AppStyles
+
 
 class ModernButton(QPushButton):
-    """Custom styled button with modern gradient design"""
+    """
+    A custom styled QPushButton with a modern gradient design.
 
-    def __init__(self, text="", parent=None):
+    This button provides a visually appealing and interactive element
+    with custom styling defined in `AppStyles`.
+    """
+
+    def __init__(self, text: str = "", parent=None):
+        """
+        Initializes the ModernButton.
+
+        Args:
+            text (str): The text to display on the button. Defaults to an empty string.
+            parent (QWidget, optional): The parent widget of the button. Defaults to None.
+        """
         super().__init__(text, parent)
         self._setup_button()
 
     def _setup_button(self):
-        """Initialize button styling and properties"""
-        self.setStyleSheet(self._get_button_style())
+        """
+        Applies initial styling and properties to the button.
+
+        This includes setting the stylesheet, cursor shape, minimum height, and font.
+        """
+        self.setStyleSheet(AppStyles.get_button_style())
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setMinimumHeight(30)
         self.setFont(QFont("Arial", 9))
 
-    def _get_button_style(self):
-        """Return modern button stylesheet"""
-        return """
-        QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #667eea, stop:1 #764ba2);
-            border-radius: 10px;
-            color: white;
-            padding: 8px 16px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-        QPushButton:hover { 
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #5a6fd8, stop:1 #6a4190);
-        }
-        QPushButton:pressed { 
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #4e63c6, stop:1 #58377e);
-        }
-        QPushButton:disabled { 
-            background: #bdc3c7; 
-            color: #7f8c8d; 
-        }
-        """
-
 
 class ModernProgressBar(QProgressBar):
-    """Custom styled progress bar with modern design"""
+    """
+    A custom styled QProgressBar with a modern design.
+
+    This progress bar provides a visually consistent progress indicator
+    with custom styling defined in `AppStyles`.
+    """
 
     def __init__(self, parent=None):
+        """
+        Initializes the ModernProgressBar.
+
+        Args:
+            parent (QWidget, optional): The parent widget of the progress bar. Defaults to None.
+        """
         super().__init__(parent)
         self._setup_progress_bar()
 
     def _setup_progress_bar(self):
-        """Initialize progress bar styling"""
-        self.setMinimumHeight(20)
-        self.setStyleSheet(self._get_progress_style())
-
-    def _get_progress_style(self):
-        """Return modern progress bar stylesheet"""
-        return """
-        QProgressBar {
-            border: 1px solid #ecf0f1;
-            border-radius: 10px;
-            text-align: center;
-            background-color: #f8f9fa;
-            font-size: 10px;
-            color: #2c3e50;
-            font-weight: bold;
-        }
-        QProgressBar::chunk {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #667eea, stop:1 #764ba2);
-            border-radius: 8px;
-            margin: 1px;
-        }
         """
+        Applies initial styling and properties to the progress bar.
+
+        This includes setting the minimum height and the stylesheet.
+        """
+        self.setMinimumHeight(20)
+        self.setStyleSheet(AppStyles.get_progress_style())

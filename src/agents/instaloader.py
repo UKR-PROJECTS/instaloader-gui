@@ -140,8 +140,9 @@ def _download_thumbnail(
         with open(thumb_path, "wb") as f:
             f.write(resp.content)
         result["thumbnail_path"] = str(thumb_path)
-    except Exception as e:
-        print(f"Thumbnail download failed: {e}")
+    except Exception:
+        # Log the error if a proper logging mechanism is in place
+        pass
 
 
 def _extract_audio(
@@ -170,8 +171,9 @@ def _extract_audio(
             audio_clip = video_clip.audio
             audio_clip.write_audiofile(str(audio_path), verbose=False, logger=None)
             result["audio_path"] = str(audio_path)
-    except Exception as e:
-        print(f"Audio extraction failed: {e}")
+    except Exception:
+        # Log the error if a proper logging mechanism is in place
+        pass
     finally:
         _cleanup_video_resources(audio_clip, video_clip)
 
@@ -194,8 +196,9 @@ def _save_caption(
             with open(caption_path, "w", encoding="utf-8") as f:
                 f.write(caption_text)
             result["caption_path"] = str(caption_path)
-        except Exception as e:
-            print(f"Caption save failed: {e}")
+        except Exception:
+            # Log the error if a proper logging mechanism is in place
+            pass
 
 
 def _extract_shortcode(url: str):
@@ -228,5 +231,6 @@ def _safe_file_removal(file_path: str):
     """Safely remove a file with error handling."""
     try:
         os.remove(file_path)
-    except OSError as e:
-        print(f"Could not remove file {file_path}: {e}")
+    except OSError:
+        # Log the error if a proper logging mechanism is in place
+        pass

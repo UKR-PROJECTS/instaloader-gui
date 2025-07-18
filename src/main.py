@@ -41,52 +41,43 @@ import os
 from pathlib import Path
 from datetime import datetime
 from PyQt6.QtGui import QIcon
-import requests
-
-# Set the current working directory to the script's directory
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from PyQt6.QtWidgets import QApplication
+
+# Add parent directory to sys.path for module imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from src.ui.main_window import InstagramDownloaderGUI
 from src.resources.splash import SplashScreen
+from src.utils.resource_loader import get_resource_path
 
 
 def main():
-    """Main application entry point"""
-    # Redirect stdout and stderr to a log file in frozen environment
+    """
+    Main application entry point.
+
+    Initializes the PyQt6 application, configures logging for frozen environments,
+    sets application metadata and styles, displays a splash screen,
+    and launches the main GUI window.
+    """
+    # Redirect stdout and stderr to a log file in frozen environment (e.g., PyInstaller)
     if getattr(sys, "frozen", False):
         log_path = Path(sys.executable).parent / "app.log"
         sys.stdout = open(log_path, "w")
         sys.stderr = sys.stdout
         print(f"Logging started at {datetime.now()}")
 
-    # Download whisper model if not present
-    whisper_model_path = Path(__file__).parent / "whisper" / "base.pt"
-    if not whisper_model_path.exists():
-        print("Downloading whisper model...")
-        whisper_model_path.parent.mkdir(parents=True, exist_ok=True)
-        url = "https://openaipublic.azureedge.net/main/whisper/models/ed3a0b6b1c0edf879ad9b11b1af5a0e6ab5db9205f891f668f8b0e6c6326e34e/base.pt"
-        try:
-            r = requests.get(url, allow_redirects=True, timeout=60)
-            r.raise_for_status()
-            with open(whisper_model_path, "wb") as f:
-                f.write(r.content)
-            print("Whisper model downloaded.")
-        except requests.exceptions.RequestException as e:
-            print(f"Error downloading whisper model: {e}")
-
+    # Create the QApplication instance
     app = QApplication(sys.argv)
     app.setApplicationName("insta-downloader-gui")
     app.setApplicationVersion("3.0.0")
     app.setStyle("Fusion")
 
-    # Print environment info for debugging
+    # Print environment information for debugging purposes
     print(f"Python version: {sys.version}")
     print(f"Current directory: {Path.cwd()}")
     print(f"Executable path: {sys.executable}")
 
-    # Set global application style
+    # Set global application stylesheet for consistent look and feel
     app.setStyleSheet(
         """
         * {
@@ -102,24 +93,27 @@ def main():
     """
     )
 
-    # Show splash screen
+    # Show splash screen during application initialization
     splash = SplashScreen()
     splash.show()
     splash.show_message("Initializing...")
 
-    # Create and show main window
+    # Create and show the main application window
     window = InstagramDownloaderGUI()
+    # Finish the splash screen and display the main window
     splash.finish(window)
 
-    # Set application icon
-    icon_path = Path(__file__).parent / "favicon.ico"
+    # Set application icon from resources
+    icon_path = get_resource_path("favicon.ico")
     if icon_path.exists():
         app_icon = QIcon(str(icon_path))
         app.setWindowIcon(app_icon)
         window.setWindowIcon(app_icon)
 
-    window.show()
+    # Display the main window
+    window.showMaximized()
 
+    # Start the application event loop
     sys.exit(app.exec())
 
 

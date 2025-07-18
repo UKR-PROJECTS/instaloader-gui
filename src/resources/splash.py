@@ -1,22 +1,9 @@
 """
 This module defines a custom SplashScreen class for a PyQt application.
+
 The SplashScreen displays a visually appealing splash window with a gradient background,
 application name, description, loading messages, and version information during application startup.
 It is designed to enhance user experience by providing feedback while the main application loads.
-
-Class SplashScreen: A subclass of QSplashScreen that customizes the splash screen's appearance
-
-Custom splash screen for the application.
-This class creates a visually enhanced splash screen using a gradient background,
-displays the application name, description, loading status, and version information.
-It also provides a method to update the loading message dynamically during startup.
-
-Methods
--------
-setup_splash():
-    Configures the appearance of the splash screen, including background, text, and version.
-show_message(message: str):
-    Updates the splash screen with a new loading message and processes UI events.
 """
 
 from PyQt6.QtWidgets import QApplication, QSplashScreen
@@ -25,14 +12,32 @@ from PyQt6.QtGui import QFont, QPixmap, QColor, QPainter, QBrush, QLinearGradien
 
 
 class SplashScreen(QSplashScreen):
-    """Custom splash screen with loading progress"""
+    """
+    Custom splash screen for the application.
+
+    This class creates a visually enhanced splash screen using a gradient background,
+    displays the application name, description, loading status, and version information.
+    It also provides a method to update the loading message dynamically during startup.
+    """
 
     def __init__(self):
+        """
+        Initializes the SplashScreen.
+
+        Calls `setup_splash` to configure the splash screen's appearance.
+        """
         super().__init__()
         self.setup_splash()
 
     def setup_splash(self):
-        """Setup splash screen appearance"""
+        """
+        Configures the appearance of the splash screen.
+
+        This method creates a QPixmap, draws a gradient background,
+        and adds text elements for the application name, description,
+        loading messages, and version information. It also sets the
+        window flags for a frameless splash screen.
+        """
         # Create splash screen pixmap
         pixmap = QPixmap(400, 300)
         pixmap.fill(QColor("#2c3e50"))
@@ -72,7 +77,15 @@ class SplashScreen(QSplashScreen):
         )
 
     def show_message(self, message: str):
-        """Show loading message on splash screen"""
+        """
+        Updates the splash screen with a new loading message.
+
+        This method displays the given message at the bottom center of the
+        splash screen and forces the UI to update immediately.
+
+        Args:
+            message (str): The loading message to display.
+        """
         self.showMessage(
             message,
             Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter,

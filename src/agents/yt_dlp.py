@@ -10,6 +10,7 @@ from typing import Dict, Any, Union
 
 from src.utils.lazy_imports import lazy_import_requests, lazy_import_moviepy
 from src.core.data_models import ReelItem
+from src.utils.resource_loader import get_resource_path
 
 
 def download_reel(
@@ -38,13 +39,12 @@ def download_reel(
     reel_folder.mkdir(exist_ok=True)
     result["folder_path"] = str(reel_folder)
 
-    yt_dlp_path = Path("bin/yt-dlp.exe")
+    yt_dlp_path = get_resource_path("bin/yt-dlp.exe")
     if not yt_dlp_path.exists():
-        raise FileNotFoundError("yt-dlp.exe not found in bin folder")
+        raise FileNotFoundError(f"yt-dlp.exe not found at {yt_dlp_path}")
 
     progress_callback(item.url, 10, "Downloading with yt-dlp...")
 
-    # Command to download video
     video_path = reel_folder / f"video{reel_number}.mp4"
     cmd = [
         str(yt_dlp_path),
@@ -55,24 +55,21 @@ def download_reel(
         "--no-warnings",
     ]
 
-    # Platform-specific settings to prevent console window
     startupinfo = None
     if os.name == "nt":
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        startupinfo.wShowWindow = 0  # SW_HIDE
+        startupinfo.wShowWindow = 0
 
     subprocess.run(cmd, check=True, startupinfo=startupinfo)
     result["video_path"] = str(video_path)
 
-    # Get metadata
     info_cmd = [str(yt_dlp_path), item.url, "--dump-json", "--quiet"]
     process = subprocess.run(
         info_cmd, capture_output=True, text=True, check=True, startupinfo=startupinfo
     )
     metadata = json.loads(process.stdout)
 
-    # Save thumbnail
     if download_options.get("thumbnail"):
         thumb_url = metadata.get("thumbnail")
         if thumb_url:
@@ -84,7 +81,6 @@ def download_reel(
                 f.write(resp.content)
             result["thumbnail_path"] = str(thumb_path)
 
-    # Save caption
     if download_options.get("caption"):
         caption = metadata.get("description", "No caption available")
         caption_path = reel_folder / f"caption{reel_number}.txt"
@@ -93,7 +89,6 @@ def download_reel(
         result["caption_path"] = str(caption_path)
         result["caption"] = caption
 
-    # Extract audio
     if download_options.get("audio"):
         _extract_audio(
             reel_folder, reel_number, result, download_options, progress_callback
@@ -111,7 +106,16 @@ def _extract_audio(
     download_options: Dict,
     progress_callback: Any,
 ):
-    """Extract audio from video if enabled."""
+    """
+    Extracts audio from the downloaded video file if enabled.
+
+    Args:
+        reel_folder: The folder where the reel is downloaded.
+        reel_number: Sequential number for file naming.
+        result: Dictionary to store download results.
+        download_options: A dictionary of download preferences.
+        progress_callback: A function to report progress updates.
+    """
     if not download_options.get("audio", True):
         return
     progress_callback("", 60, "Extracting audio...")
@@ -130,14 +134,21 @@ def _extract_audio(
             audio_clip = video_clip.audio
             audio_clip.write_audiofile(str(audio_path), verbose=False, logger=None)
             result["audio_path"] = str(audio_path)
-    except Exception as e:
-        print(f"Audio extraction failed: {e}")
+    except Exception:
+        # Log the error if a proper logging mechanism is in place
+        pass
     finally:
         _cleanup_video_resources(audio_clip, video_clip)
 
 
 def _cleanup_video_resources(audio_clip, video_clip):
-    """Safely cleanup video and audio resources."""
+    """
+    Safely closes and cleans up moviepy video and audio clip resources.
+
+    Args:
+        audio_clip: The audio clip object to close.
+        video_clip: The video clip object to close.
+    """
     if audio_clip:
         try:
             audio_clip.close()
