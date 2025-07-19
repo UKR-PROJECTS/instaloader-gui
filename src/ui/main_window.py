@@ -20,12 +20,12 @@ from src.ui.styles import AppStyles
 from src.core.settings_manager import SettingsManager
 from src.utils.url_validator import is_valid_instagram_url
 from src.ui.panel_builder import PanelBuilder
-from src.utils.bin_checker import ensure_yt_dlp, ensure_ffmpeg, ensure_whisper_model
+from src.ui.progress_dialog import DownloadProgressDialog
+from src.ui.dependency_downloader import DependencyDownloader
 
 from PyQt6.QtWidgets import (
     QMainWindow,
     QWidget,
-    QHBoxLayout,
     QListWidgetItem,
     QMessageBox,
 )
@@ -228,48 +228,34 @@ class InstagramDownloaderGUI(QMainWindow):
             )
             return
 
-        # Create a new queue that includes dependencies
-        download_queue = []
+        options = {
+            "video": self.video_check.isChecked(),
+            "thumbnail": self.thumbnail_check.isChecked(),
+            "audio": self.audio_check.isChecked(),
+            "caption": self.caption_check.isChecked(),
+            "transcribe": self.transcribe_check.isChecked(),
+            "downloader": self.downloader_combo.currentText(),
+        }
 
-        # Add dependencies to the queue if they are needed
-        if self.downloader_combo.currentText() == "yt-dlp":
-            if not ensure_yt_dlp(lambda status: self.update_progress("", 0, status)):
-                download_queue.append(
-                    ReelItem(
-                        url="yt-dlp", item_type="dependency", dependency_name="yt-dlp"
-                    )
-                )
-            if not ensure_ffmpeg(lambda status: self.update_progress("", 0, status)):
-                download_queue.append(
-                    ReelItem(
-                        url="ffmpeg", item_type="dependency", dependency_name="ffmpeg"
-                    )
-                )
+        self.progress_dialog = DownloadProgressDialog(self)
+        self.dependency_downloader = DependencyDownloader(options)
+        self.dependency_downloader.progress_updated.connect(
+            self.update_dependency_progress
+        )
+        self.dependency_downloader.finished.connect(
+            self.on_dependency_download_finished
+        )
+        self.dependency_downloader.start()
 
-        if self.transcribe_check.isChecked():
-            if not ensure_whisper_model(
-                lambda status: self.update_progress("", 0, status)
-            ):
-                download_queue.append(
-                    ReelItem(
-                        url="whisper", item_type="dependency", dependency_name="whisper"
-                    )
-                )
+    def update_dependency_progress(self, value, text):
+        self.progress_dialog.setValue(value)
+        self.progress_dialog.setLabelText(text)
 
-        download_queue.extend(self.reel_queue.copy())
-        self.reel_queue = download_queue
-
-        # Update the UI list
-        self.queue_list.clear()
-        for item in self.reel_queue:
-            display_text = (
-                f"🔗 {item.url[:50]}{'...' if len(item.url) > 50 else ''}"
-                if item.item_type == "reel"
-                else f"📦 {item.dependency_name}"
-            )
-            list_item = QListWidgetItem(display_text)
-            list_item.setData(Qt.ItemDataRole.UserRole, item)
-            self.queue_list.addItem(list_item)
+    def on_dependency_download_finished(self, success):
+        self.progress_dialog.close()
+        if not success:
+            QMessageBox.critical(self, "Error", "Failed to download dependencies.")
+            return
 
         options = {
             "video": self.video_check.isChecked(),

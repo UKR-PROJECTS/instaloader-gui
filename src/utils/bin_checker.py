@@ -32,19 +32,19 @@ def download_yt_dlp(progress_callback=None):
 
     try:
         if progress_callback:
-            progress_callback("Downloading yt-dlp.exe...")
+            progress_callback(0, "Downloading yt-dlp.exe...")
 
         logger.info("Downloading yt-dlp.exe...")
         urllib.request.urlretrieve(url, dest_path)
 
         if progress_callback:
-            progress_callback("yt-dlp.exe downloaded successfully")
+            progress_callback(100, "yt-dlp.exe downloaded successfully")
         logger.info("yt-dlp.exe downloaded successfully")
         return True
     except Exception as e:
         logger.error(f"Failed to download yt-dlp.exe: {str(e)}")
         if progress_callback:
-            progress_callback(f"Failed to download yt-dlp.exe: {e}")
+            progress_callback(0, f"Failed to download yt-dlp.exe: {e}")
         return False
 
 
@@ -61,12 +61,12 @@ def download_ffmpeg(progress_callback=None):
 
     try:
         if progress_callback:
-            progress_callback("Downloading FFmpeg...")
+            progress_callback(0, "Downloading FFmpeg...")
         logger.info("Downloading FFmpeg...")
         urllib.request.urlretrieve(url, zip_path)
 
         if progress_callback:
-            progress_callback("Extracting FFmpeg...")
+            progress_callback(50, "Extracting FFmpeg...")
         logger.info("Extracting FFmpeg...")
 
         # Extract FFmpeg executable
@@ -82,13 +82,13 @@ def download_ffmpeg(progress_callback=None):
                     break
 
         if progress_callback:
-            progress_callback("FFmpeg downloaded successfully")
+            progress_callback(100, "FFmpeg downloaded successfully")
         logger.info("FFmpeg downloaded and extracted successfully")
         return True
     except Exception as e:
         logger.error(f"Failed to download FFmpeg: {str(e)}")
         if progress_callback:
-            progress_callback(f"Failed to download FFmpeg: {e}")
+            progress_callback(0, f"Failed to download FFmpeg: {e}")
         return False
     finally:
         # Clean up temporary directory
@@ -116,29 +116,30 @@ def download_whisper_model(progress_callback=None):
 
     try:
         if progress_callback:
-            progress_callback("Verifying Whisper model files...")
+            progress_callback(0, "Verifying Whisper model files...")
         logger.info("Verifying Whisper model files...")
 
-        for file, url in model_files.items():
+        for i, (file, url) in enumerate(model_files.items()):
             file_path = os.path.join(whisper_dir, file)
 
             if os.path.exists(file_path):
                 continue
 
             if progress_callback:
-                progress_callback(f"Downloading {file}...")
+                progress_callback(
+                    int(i / len(model_files) * 100), f"Downloading {file}..."
+                )
 
             urllib.request.urlretrieve(url, file_path)
 
-            if progress_callback:
-                progress_callback(f"{file} downloaded successfully.")
-
+        if progress_callback:
+            progress_callback(100, "Whisper model download complete")
         logger.info("Whisper model download complete")
         return True
     except Exception as e:
         logger.error(f"Failed to download Whisper model: {str(e)}")
         if progress_callback:
-            progress_callback(f"Failed to download Whisper model: {e}")
+            progress_callback(0, f"Failed to download Whisper model: {e}")
         return False
 
 
