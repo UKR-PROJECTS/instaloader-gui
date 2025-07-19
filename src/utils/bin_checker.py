@@ -102,7 +102,6 @@ def download_whisper_model(progress_callback=None):
     base_dir = os.path.dirname(get_bin_dir())
     whisper_dir = os.path.join(base_dir, "whisper")
     assets_dir = os.path.join(whisper_dir, "assets")
-    model_path = os.path.join(whisper_dir, "base.pt")
 
     # Create directories if needed
     os.makedirs(whisper_dir, exist_ok=True)
@@ -123,6 +122,7 @@ def download_whisper_model(progress_callback=None):
 
         total_files = len(model_files)
         downloaded = 0
+
         for file, url in model_files.items():
             file_path = os.path.join(whisper_dir, file)
 
@@ -133,10 +133,30 @@ def download_whisper_model(progress_callback=None):
 
             if progress_callback:
                 progress_callback(
-                    "", int(downloaded / total_files * 100), f"Downloading {file}..."
+                    "",
+                    int(downloaded / total_files * 100),
+                    f"Starting download: {file}",
                 )
-            logger.info(f"Downloading {file}...")
-            urllib.request.urlretrieve(url, file_path)
+
+            # Use PySide6's network access for reliable downloads
+            success = download_file_with_progress(
+                url,
+                file_path,
+                lambda current, total, speed: (
+                    progress_callback(
+                        "",
+                        int((downloaded + current / (total or 1)) / total_files * 100),
+                        f"Downloading {file}: {format_size(current)}/{format_size(total)} ({speed} MB/s)",
+                    )
+                    if progress_callback
+                    else None
+                ),
+            )
+
+            if not success:
+                logger.error(f"Failed to download: {file}")
+                return False
+
             downloaded += 1
 
         if progress_callback:
@@ -147,6 +167,92 @@ def download_whisper_model(progress_callback=None):
     except Exception as e:
         logger.error(f"Failed to download Whisper model: {str(e)}")
         return False
+
+
+def format_size(bytes):
+    """Convert bytes to human-readable format"""
+    if bytes is None:
+        return "Unknown"
+    for unit in ["B", "KB", "MB", "GB"]:
+        if bytes < 1024.0:
+            return f"{bytes:.2f} {unit}"
+        bytes /= 1024.0
+    return f"{bytes:.2f} GB"
+
+
+def download_file_with_progress(url, dest, progress_callback=None, max_retries=3):
+    """Download a file with progress reporting and retry logic"""
+    from PySide6.QtNetwork import QNetworkRequest, QNetworkAccessManager
+    from PySide6.QtCore import QUrl, QFile, QIODevice, QTimer
+    import time
+
+    manager = QNetworkAccessManager()
+    file = QFile(dest)
+
+    if not file.open(QIODevice.WriteOnly):
+        logger.error(f"Failed to open file for writing: {dest}")
+        return False
+
+    retry_count = 0
+    start_time = time.time()
+    last_received = 0
+    total_size = None
+
+    while retry_count < max_retries:
+        request = QNetworkRequest(QUrl(url))
+        reply = manager.get(request)
+
+        # Create a timer to track download speed
+        timer = QTimer()
+        timer.start(1000)  # Update every second
+
+        def update_speed():
+            nonlocal last_received
+            if total_size is None:
+                return
+
+            current = file.size()
+            elapsed = time.time() - start_time
+            speed = (current - last_received) / (1024 * 1024)  # MB/s
+            last_received = current
+
+            if progress_callback:
+                progress_callback(current, total_size, f"{speed:.2f}")
+
+        timer.timeout.connect(update_speed)
+
+        # Track download progress
+        def on_download_progress(received, total):
+            nonlocal total_size
+            total_size = total
+            file.write(reply.readAll())
+
+            if progress_callback:
+                progress_callback(received, total, "0.00")
+
+        reply.downloadProgress.connect(on_download_progress)
+
+        # Wait for download to finish
+        loop = QEventLoop()
+        reply.finished.connect(loop.quit)
+        loop.exec()
+
+        if reply.error() == QNetworkReply.NoError:
+            file.close()
+            return True
+
+        # Handle HTTP errors
+        error = reply.errorString()
+        logger.warning(f"Download failed (attempt {retry_count+1}): {error}")
+
+        # Exponential backoff before retrying
+        delay = 2**retry_count
+        time.sleep(delay)
+        retry_count += 1
+
+    file.close()
+    file.remove()
+    return False
 
 
 def ensure_whisper_model(progress_callback=None):

@@ -50,7 +50,6 @@ insta-downloader-gui/
 ├── src/
 │   ├── agents/           # Download agents (instaloader, yt_dlp)
 │   ├── bin/              # Binaries (ffmpeg, yt-dlp)
-│   ├── build/            # Build artifacts
 │   ├── core/             # Core application logic
 │   ├── resources/        # Resources (images, icons, etc.)
 │   ├── ui/               # User interface components
