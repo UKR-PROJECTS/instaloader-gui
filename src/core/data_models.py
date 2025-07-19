@@ -27,9 +27,13 @@ class ReelItem:
         transcript: Audio transcription
         error_message: Error details if download fails
         folder_path: Path to reel's download folder
+        item_type: Type of item (e.g., 'reel' or 'dependency')
+        dependency_name: Name of the dependency if item_type is 'dependency'
     """
 
     url: str
+    item_type: str = "reel"
+    dependency_name: str = ""
     title: str = ""
     status: str = "Pending"
     progress: int = 0

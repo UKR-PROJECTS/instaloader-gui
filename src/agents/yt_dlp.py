@@ -41,7 +41,7 @@ def download_reel(
     result["folder_path"] = str(reel_folder)
 
     # Ensure yt-dlp is available in frozen state
-    if not ensure_yt_dlp(progress_callback):
+    if not ensure_yt_dlp():
         raise FileNotFoundError(
             "Failed to download yt-dlp.exe. Please check your internet connection."
         )
@@ -128,7 +128,7 @@ def _extract_audio(
         return
 
     # Ensure ffmpeg is available in frozen state
-    if is_frozen() and not ensure_ffmpeg(progress_callback):
+    if is_frozen() and not ensure_ffmpeg():
         progress_callback("", 60, "FFmpeg not available, skipping audio extraction...")
         return
 
