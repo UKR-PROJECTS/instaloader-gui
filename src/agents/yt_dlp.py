@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, Any, Union
 
 from src.utils.lazy_imports import lazy_import_requests, lazy_import_moviepy
+from src.utils.bin_checker import ensure_yt_dlp, ensure_ffmpeg, get_bin_dir, is_frozen
 from src.core.data_models import ReelItem
 from src.utils.resource_loader import get_resource_path
 
@@ -39,7 +40,14 @@ def download_reel(
     reel_folder.mkdir(exist_ok=True)
     result["folder_path"] = str(reel_folder)
 
-    yt_dlp_path = get_resource_path("bin/yt-dlp.exe")
+    # Ensure yt-dlp is available in frozen state
+    if not ensure_yt_dlp(progress_callback):
+        raise FileNotFoundError(
+            "Failed to download yt-dlp.exe. Please check your internet connection."
+        )
+
+    bin_dir = get_bin_dir()
+    yt_dlp_path = Path(bin_dir) / "yt-dlp.exe"
     if not yt_dlp_path.exists():
         raise FileNotFoundError(f"yt-dlp.exe not found at {yt_dlp_path}")
 
@@ -118,6 +126,12 @@ def _extract_audio(
     """
     if not download_options.get("audio", True):
         return
+
+    # Ensure ffmpeg is available in frozen state
+    if is_frozen() and not ensure_ffmpeg(progress_callback):
+        progress_callback("", 60, "FFmpeg not available, skipping audio extraction...")
+        return
+
     progress_callback("", 60, "Extracting audio...")
     video_path = result.get("video_path") or str(
         reel_folder / f"video{reel_number}.mp4"

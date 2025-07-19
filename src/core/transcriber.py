@@ -5,6 +5,12 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 from src.utils.lazy_imports import lazy_import_moviepy, lazy_import_whisper
+from src.utils.bin_checker import (
+    get_bin_dir,
+    ensure_ffmpeg,
+    ensure_whisper_model,
+    is_frozen,
+)
 from src.utils.resource_loader import get_resource_path
 
 
@@ -41,14 +47,12 @@ class AudioTranscriber:
         if progress_callback:
             progress_callback("", 5, "Loading Whisper model...")
         try:
-            # Set path to our ffmpeg executable using absolute path
-            ffmpeg_path = get_resource_path("bin/ffmpeg.exe")
-            if ffmpeg_path.exists():
-                # Use absolute path in environment variable
-                os.environ["WHISPER_FFMPEG_PATH"] = str(ffmpeg_path.absolute())
+            # Ensure whisper model exists in frozen state
+            if not ensure_whisper_model(progress_callback):
+                raise FileNotFoundError("Failed to download Whisper model files")
 
             whisper_module = lazy_import_whisper()
-            model_dir = get_resource_path("whisper")
+            model_dir = Path(get_bin_dir()).parent / "whisper"
 
             # Verify model file and assets exist
             model_file = model_dir / "base.pt"
@@ -110,19 +114,14 @@ class AudioTranscriber:
                 print(error_msg)
                 return
 
-            # Handle ffmpeg path for both development and frozen states
             try:
-                # First try bundled ffmpeg
-                ffmpeg_path = get_resource_path("bin/ffmpeg.exe")
-                if not ffmpeg_path.exists():
-                    # Try looking for it in the executable directory for frozen state
-                    exe_dir = Path(sys.executable).parent
-                    ffmpeg_path = exe_dir / "bin" / "ffmpeg.exe"
-                    if not ffmpeg_path.exists():
-                        raise FileNotFoundError(f"FFmpeg not found at: {ffmpeg_path}")
+                # Ensure ffmpeg is available in frozen state
+                if is_frozen() and not ensure_ffmpeg(progress_callback):
+                    raise FileNotFoundError("FFmpeg not found and download failed")
 
-                # Add to PATH temporarily
-                os.environ["PATH"] = f"{ffmpeg_path.parent};{os.environ['PATH']}"
+                # Get ffmpeg path from bin directory
+                ffmpeg_path = Path(get_bin_dir()) / "ffmpeg.exe"
+                os.environ["PATH"] = f"{str(ffmpeg_path.parent)};{os.environ['PATH']}"
 
                 # Verify ffmpeg works
                 ffmpeg_result = subprocess.run(
@@ -135,7 +134,6 @@ class AudioTranscriber:
                     raise RuntimeError(
                         f"FFmpeg failed version check: {ffmpeg_result.stderr}"
                     )
-
             except Exception as e:
                 error_msg = f"FFmpeg setup failed: {str(e)}"
                 result["transcript"] = error_msg
