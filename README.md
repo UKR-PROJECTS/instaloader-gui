@@ -24,7 +24,7 @@ insta-downloader-gui is a powerful, open‑source desktop application built with
 - **Dual Download Engines**: Choose between `instaloader` and `yt-dlp`.
 - **Automatic Fallback**: Seamlessly switches engines on failure.
 - **Automatic yt-dlp Updates**: Checks for and installs the latest version of yt-dlp.
-- **Optional Audio Transcription**: Transcribe Reel audio to text using OpenAI Whisper.
+- **Audio Transcription**: Transcribe Reel audio to text using the included OpenAI Whisper model (base.pt) with support for multilingual transcription.
 - Download Instagram Reels as `.mp4`.
 - Extract and save thumbnails as `.jpg`.
 - Save captions as `.txt`.
@@ -47,8 +47,21 @@ insta-downloader-gui/
 ├── README.md
 ├── requirements.txt
 ├── screenshots/
-├── src/ 
-└── tests/         
+├── src/
+│   ├── agents/           # Download agents (instaloader, yt_dlp)
+│   ├── bin/              # Binaries (ffmpeg, yt-dlp)
+│   ├── build/            # Build artifacts
+│   ├── core/             # Core application logic
+│   ├── resources/        # Resources (images, icons, etc.)
+│   ├── ui/               # User interface components
+│   ├── utils/            # Utility functions
+│   ├── whisper/          # Whisper model for audio transcription
+│   ├── __init__.py
+│   ├── build.bat
+│   ├── favicon.ico
+│   ├── main.py           # Main application entry point
+│   └── updater.py        # Auto-updater
+└── tests/                # Unit tests
 ```
 
 ---
@@ -68,7 +81,7 @@ pip install -r requirements.txt
 > Or manually:
 >
 > ```bash
-> pip install PyQt6 instaloader moviepy==1.0.3 requests pillow
+> pip install PyQt6 instaloader yt-dlp moviepy==1.0.3 requests pillow openai-whisper
 > ```
 
 ---

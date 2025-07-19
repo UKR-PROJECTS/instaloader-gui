@@ -86,15 +86,21 @@ class TestReelDownloader(unittest.TestCase):
             "folder_path": "test_folder",
         }
 
-        # Create a mock for _handle_transcription
+        # Create a mock for _handle_transcription (if it exists)
         with patch.object(
-            self.downloader, "_handle_transcription"
+            self.downloader, "_handle_transcription", create=True
         ) as mock_transcription:
             self.downloader._process_downloads()
             mock_instaloader_download.assert_called_once()
             mock_yt_dlp_download.assert_not_called()
-            mock_transcription.assert_called_once_with(
-                {"status": "success", "folder_path": "test_folder"}, 1
+            # Get the item that was passed to the transcription handler
+            call_args = mock_transcription.call_args[0]
+            self.assertEqual(
+                call_args[0], {"status": "success", "folder_path": "test_folder"}
+            )
+            self.assertEqual(call_args[1], 1)
+            self.assertEqual(
+                call_args[2].url, "https://www.instagram.com/reel/Cxyz123/"
             )
 
     @patch(

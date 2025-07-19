@@ -161,19 +161,7 @@ class ReelDownloader(QThread):
                 )
                 result = primary_agent(item, i)
                 if self.download_options.get("transcribe", False):
-                    try:
-                        reel_folder = Path(result["folder_path"])
-                        self.audio_transcriber.transcribe_audio_from_reel(
-                            reel_folder, i, result, self.progress_updated.emit
-                        )
-                    except Exception as e:
-                        error_msg = f"Transcription failed: {str(e)}"
-                        result["transcript"] = error_msg
-                        self.progress_updated.emit(item.url, 0, error_msg)
-                        print(f"Transcription error: {e}")
-                        import traceback
-
-                        traceback.print_exc()
+                    self._handle_transcription(result, i, item)
                 self.download_completed.emit(item.url, result)
                 continue
             except Exception as e:
@@ -223,6 +211,27 @@ class ReelDownloader(QThread):
             self.download_options,
             self.progress_updated.emit,
         )
+
+    def _handle_transcription(
+        self, result: Dict[str, Any], reel_number: int, item: ReelItem
+    ):
+        """Handles transcription for a downloaded reel."""
+        if not self.download_options.get("transcribe", False):
+            return
+
+        try:
+            reel_folder = Path(result["folder_path"])
+            self.audio_transcriber.transcribe_audio_from_reel(
+                reel_folder, reel_number, result, self.progress_updated.emit
+            )
+        except Exception as e:
+            error_msg = f"Transcription failed: {str(e)}"
+            result["transcript"] = error_msg
+            self.progress_updated.emit(item.url, 0, error_msg)
+            print(f"Transcription error: {e}")
+            import traceback
+
+            traceback.print_exc()
 
     def _download_with_yt_dlp(self, item: ReelItem, reel_number: int) -> Dict[str, Any]:
         """

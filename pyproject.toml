@@ -10,7 +10,7 @@ authors = [
 ]
 description = "A desktop GUI for downloading Instagram Reels, Videos, and more."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 license = { text = "MIT License" }
 classifiers = [
     "Programming Language :: Python :: 3",

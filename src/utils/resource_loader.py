@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from typing import cast, Any
 
 
 def get_base_path() -> Path:
@@ -13,13 +14,16 @@ def get_base_path() -> Path:
     Returns:
         Path: The base directory where resources are located.
     """
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        # Running as a bundled executable (one-file mode)
-        # Resources are typically extracted to a temporary directory accessible via _MEIPASS
-        return Path(sys._MEIPASS)
+    if getattr(sys, "frozen", False):
+        # PyInstaller sets _MEIPASS for one-file bundles
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            return Path(cast(str, meipass))
+
+        # For one-folder bundles, use executable directory
+        return Path(sys.executable).parent
     else:
-        # Running from source or as a non-bundled executable (one-folder mode)
-        # The base path is two levels up from the current file (src/utils/resource_loader.py)
+        # Running from source
         return Path(__file__).resolve().parent.parent
 
 
@@ -41,30 +45,19 @@ def get_resource_path(relative_path: str) -> Path:
     """
     # Check if running as a frozen executable (e.g., PyInstaller)
     if getattr(sys, "frozen", False):
-        # Base path of the executable
-        executable_dir = Path(sys.executable).parent
-
-        # Special handling for the 'whisper' directory in frozen state
-        if relative_path.startswith("whisper"):
-            whisper_path = executable_dir / "whisper"
-            if whisper_path.exists():
-                # If a 'whisper' folder exists next to the exe, use it
-                # and append the rest of the relative path.
-                return executable_dir / relative_path
-
-        # For one-file bundles, resources are in a temporary directory (_MEIPASS)
-        if hasattr(sys, "_MEIPASS"):
-            # Check if the resource exists next to the executable (e.g., config files)
-            external_path = executable_dir / relative_path
-            if external_path.exists():
-                return external_path
-            # Otherwise, fall back to the temporary _MEIPASS directory
-            return Path(sys._MEIPASS) / relative_path
-        else:
-            # For one-folder bundles, resources are in the same directory as the executable
-            return executable_dir / relative_path
+        # For one-file bundle, assets are next to the exe, not in _MEIPASS
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            # The executable is in the parent directory of _MEIPASS
+            executable_dir = Path(sys.executable).parent
+            resource_path = executable_dir / relative_path
+            if resource_path.exists():
+                return resource_path
+            # If not found next to exe, check inside _MEIPASS (for non-asset files)
+            return Path(cast(str, meipass)) / relative_path
+        else:  # One-folder bundle
+            return Path(sys.executable).parent / relative_path
     else:
         # Application is running from source code
-        # Assumes this file is located at `src/utils/resource_loader.py`
         base_path = Path(__file__).resolve().parent.parent
         return base_path / relative_path
