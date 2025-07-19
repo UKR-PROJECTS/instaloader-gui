@@ -35,7 +35,18 @@ def download_yt_dlp(progress_callback=None):
             progress_callback(0, "Downloading yt-dlp.exe...")
 
         logger.info("Downloading yt-dlp.exe...")
-        urllib.request.urlretrieve(url, dest_path)
+        urllib.request.urlretrieve(
+            url,
+            dest_path,
+            reporthook=lambda count, size, total: (
+                progress_callback(
+                    min(100, int(count * size * 100 / total if total > 0 else 0)),
+                    "Downloading yt-dlp.exe...",
+                )
+                if progress_callback
+                else None
+            ),
+        )
 
         if progress_callback:
             progress_callback(100, "yt-dlp.exe downloaded successfully")
@@ -63,7 +74,18 @@ def download_ffmpeg(progress_callback=None):
         if progress_callback:
             progress_callback(0, "Downloading FFmpeg...")
         logger.info("Downloading FFmpeg...")
-        urllib.request.urlretrieve(url, zip_path)
+        urllib.request.urlretrieve(
+            url,
+            zip_path,
+            reporthook=lambda count, size, total: (
+                progress_callback(
+                    min(50, int(count * size * 50 / total if total > 0 else 0)),
+                    "Downloading FFmpeg...",
+                )
+                if progress_callback
+                else None
+            ),
+        )
 
         if progress_callback:
             progress_callback(50, "Extracting FFmpeg...")
@@ -130,7 +152,18 @@ def download_whisper_model(progress_callback=None):
                     int(i / len(model_files) * 100), f"Downloading {file}..."
                 )
 
-            urllib.request.urlretrieve(url, file_path)
+            urllib.request.urlretrieve(
+                url,
+                file_path,
+                reporthook=lambda count, size, total: (
+                    progress_callback(
+                        min(100, int(count * size * 100 / total if total > 0 else 0)),
+                        f"Downloading {file}...",
+                    )
+                    if progress_callback
+                    else None
+                ),
+            )
 
         if progress_callback:
             progress_callback(100, "Whisper model download complete")
