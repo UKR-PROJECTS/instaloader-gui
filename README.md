@@ -172,7 +172,7 @@ If you find this project useful, please consider giving it a star on GitHub! You
 
 - **GitHub Issues**: [Report bugs or request features](https://github.com/ukr-projects/insta-downloader-gui/issues)
 - **Discussions**: [Community discussions and Q&A](https://github.com/ukr-projects/insta-downloader-gui/discussions)
-- **Email**: ukrpurojekuto@gmail.com
+- **Email**: ujjwalkrai@gmail.com
 
 ---
 
