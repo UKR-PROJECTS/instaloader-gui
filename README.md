@@ -174,7 +174,7 @@ pip install -r requirements.txt
 
 <div align="center">
 
-**Made with ❤️ by the Ujjwal Nova**
+**Made with ❤️ by the ukr**
 
 [⭐ Star this repo](https://github.com/uikraft-hub/insta-downloader-gui) | [🐛 Report Bug](https://github.com/uikraft-hub/insta-downloader-gui/issues) | [💡 Request Feature](https://github.com/uikraft-hub/insta-downloader-gui/issues)
 
