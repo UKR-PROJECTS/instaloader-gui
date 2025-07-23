@@ -1,28 +1,11 @@
-# Core GUI Framework
 PyQt6>=6.4.0
-
-# Instagram downloading
 instaloader>=4.9.6
-
-# Video/Audio processing
 moviepy==1.0.3
 numpy<2.3
-
-# Image processing
 Pillow>=9.5.0
-
-# HTTP requests
 requests>=2.28.0
 beautifulsoup4>=4.12.2
-
-# Optional: For better performance
 ffmpeg-python>=0.2.0
-
-# AI Transcription
 openai-whisper
-
-# Testing
 pytest>=8.0.0
-
-# Building
 pyinstaller
