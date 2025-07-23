@@ -8,7 +8,7 @@ A professional PyQt6 application for downloading Instagram Reels
 Author: Ujjwal Nova
 Version: 3.0.0
 License: MIT
-Repository: https://github.com/ukr-projects/insta-downloader-gui
+Repository: https://github.com/uikraft-hub/insta-downloader-gui
 
 Features:
 - Dual download engines: yt-dlp and instaloader.
