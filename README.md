@@ -90,7 +90,7 @@ pip install -r requirements.txt
 1. **Clone** the repository:
 
    ```bash
-   git clone https://github.com/ukr-projects/insta-downloader-gui.git
+   git clone https://github.com/uikraft-hub/insta-downloader-gui.git
    cd insta-downloader-gui
    ```
 
@@ -170,8 +170,8 @@ If you find this project useful, please consider giving it a star on GitHub! You
 
 ## 📞 Support
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/ukr-projects/insta-downloader-gui/issues)
-- **Discussions**: [Community discussions and Q&A](https://github.com/ukr-projects/insta-downloader-gui/discussions)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/uikraft-hub/insta-downloader-gui/issues)
+- **Discussions**: [Community discussions and Q&A](https://github.com/uikraft-hub/insta-downloader-gui/discussions)
 - **Email**: ujjwalkrai@gmail.com
 
 ---
@@ -180,6 +180,6 @@ If you find this project useful, please consider giving it a star on GitHub! You
 
 **Made with ❤️ by the Ujjwal Nova**
 
-[⭐ Star this repo](https://github.com/ukr-projects/insta-downloader-gui) | [🐛 Report Bug](https://github.com/ukr-projects/insta-downloader-gui/issues) | [💡 Request Feature](https://github.com/ukr-projects/insta-downloader-gui/issues)
+[⭐ Star this repo](https://github.com/uikraft-hub/insta-downloader-gui) | [🐛 Report Bug](https://github.com/uikraft-hub/insta-downloader-gui/issues) | [💡 Request Feature](https://github.com/uikraft-hub/insta-downloader-gui/issues)
 
 </div>
