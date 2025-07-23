@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "insta-downloader-gui"
 version = "3.0.0"
 authors = [
-  { name="UKR", email="ukr.projects@gmail.com" }
+  { name="ukr", email="ujjwalkrai@gmail.com" }
 ]
 description = "A desktop GUI for downloading Instagram Reels, Videos, and more."
 readme = "README.md"
@@ -32,8 +32,8 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/ukr-projects/insta-downloader-gui"
-"Bug Tracker" = "https://github.com/ukr-projects/insta-downloader-gui/issues"
+"Homepage" = "https://github.com/uikraft-hub/insta-downloader-gui"
+"Bug Tracker" = "https://github.com/uikraft-hub/insta-downloader-gui/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
