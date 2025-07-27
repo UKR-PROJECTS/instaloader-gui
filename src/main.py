@@ -1,39 +1,9 @@
 """
-insta-downloader-gui - Professional Instagram Reel Downloader  with transcription
-==============================================
-
-insta-downloader-gui with Queue Management
-A professional PyQt6 application for downloading Instagram Reels
-
-Author: Ujjwal Nova
-Version: 3.0.0
+Project: insta-downloader-gui
+Author: ukr
+Version: 1.0.0
 License: MIT
 Repository: https://github.com/uikraft-hub/insta-downloader-gui
-
-Features:
-- Dual download engines: yt-dlp and instaloader.
-- Automatic fallback to the secondary downloader if the primary one fails.
-- User-selectable preferred downloader.
-- Download Instagram Reels as .mp4 files.
-- Extract and save video thumbnails as .jpg files.
-- Save captions as .txt files.
-- Extract audio tracks as .mp3 files.
-- Optional transcription of audio to text using OpenAI Whisper.
-- Responsive, user-friendly GUI built with PyQt6.
-- Session-based organization: downloads are grouped by timestamped session folders.
-- Queue management for batch downloads with real-time progress.
-
-Dependencies:
-- PyQt6: GUI framework
-- instaloader: Instagram Media Downloader Engine (LAZY LOADED)
-- moviepy==1.0.3: Extracting mp3 (LAZY LOADED)
-- Pillow: Image Processing (LAZY LOADED)
-- openai-whisper: Reel Transcription (LAZY LOADED)
-- yt-dlp.exe: included in the bin folder
-
-Usage:
-- cd src
-- python main.py
 """
 
 import sys
