@@ -37,6 +37,7 @@ dev = [
     "flake8", 
     "pytest",
     "requests-mock",
+    "pyinstaller"
 ]
 
 [project.urls]
