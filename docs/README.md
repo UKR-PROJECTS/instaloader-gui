@@ -20,7 +20,7 @@
 ## 🖼 Screenshot
 
 <div align="center">
-  <img src="../assets/screenshots/screenshot.jpg" alt="GUI Interface" />
+  <img src="../assets/screenshots/screenshot.png" alt="GUI Interface" />
   <p><em>GUI Interface</em></p>
 </div>
 
