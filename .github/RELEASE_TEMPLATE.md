@@ -72,11 +72,11 @@ MD5: [checksum-here]
 ## 📞 Support
 
 - 📧 Email: ujjwalkrai@gmail.com
-- 🐛 Issues: [Repo Issues](https://github.com/ukr-projects/repo-blueprint/issues)
-- 🔓 Security: [Repo Security](https://github.com/ukr-projects/repo-blueprint/security)
-- ⛏ Pull Request: [Repo Pull Request](https://github.com/ukr-projects/repo-blueprint/pulls)
-- 📖 Docs: [Repo Documentation](https://github.com/ukr-projects/repo-blueprint/tree/main/docs)
-- 📃 Changelog: [Repo Changelog](https://github.com/ukr-projects/repo-blueprint/docs/CHANGELOG.md)
+- 🐛 Issues: [Repo Issues](https://github.com/uikraft-hub/insta-downloader-gui/issues)
+- 🔓 Security: [Repo Security](https://github.com/uikraft-hub/insta-downloader-gui/security)
+- ⛏ Pull Request: [Repo Pull Request](https://github.com/uikraft-hub/insta-downloader-gui/pulls)
+- 📖 Docs: [Repo Documentation](https://github.com/uikraft-hub/insta-downloader-gui/tree/main/docs)
+- 📃 Changelog: [Repo Changelog](https://github.com/uikraft-hub/insta-downloader-gui/docs/CHANGELOG.md)
 ---
 
 *This release source code was tested on: Windows, MacOS and Ubuntu*

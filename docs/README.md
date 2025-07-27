@@ -9,7 +9,7 @@
 ![Language: Python](https://img.shields.io/badge/Language-Python-blue)
 
 <div align="center">
-  <img src="../assets/insta-downloader-gui-banner.jpg" alt="Project Banner" width="80%">
+  <img src="../assets/insta-downloader-gui-banner.jpg" alt="Project Banner" width="100%">
 </div>
 
 <div align="center">
