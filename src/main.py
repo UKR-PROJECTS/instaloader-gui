@@ -39,7 +39,7 @@ def main():
     # Create the QApplication instance
     app = QApplication(sys.argv)
     app.setApplicationName("insta-downloader-gui")
-    app.setApplicationVersion("3.0.0")
+    app.setApplicationVersion("1.0.0")
     app.setStyle("Fusion")
 
     # Print environment information for debugging purposes

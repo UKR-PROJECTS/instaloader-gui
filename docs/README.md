@@ -1,5 +1,5 @@
 <h1>
-  <img src="../assets/insta-downloader-gui-ico.png" alt="Project Logo" width="25" height="25" style="vertical-align: middle;">
+  <img src="../assets/insta-downloader-gui-logo.ico" alt="Project Logo" width="25" height="25" style="vertical-align: middle;">
   insta-downloader-gui
 </h1>
 
@@ -55,6 +55,80 @@
 ## 🗂️ Folder Structure
 
 ```
+insta-downloader-gui/
+├── .gitattributes
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.md
+│   │   └── feature_request.md
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   ├── RELEASE_TEMPLATE.md
+│   └── workflows/
+│       └── ci.yml
+├── .gitignore
+├── assets/
+│   ├── insta-downloader-gui-logo.ico
+│   └── screenshots/
+│       └── screenshot.png
+├── docs/
+│   ├── CHANGELOG.md
+│   ├── CODE_OF_CONDUCT.md
+│   ├── CONTRIBUTING.md
+│   ├── README.md
+│   ├── SECURITY.md
+│   ├── STATUS.md
+│   └── USAGE.md
+├── LICENSE
+├── pyproject.toml
+├── requirements.txt
+├── src/
+│   ├── __init__.py
+│   ├── agents/
+│   │   ├── instaloader.py
+│   │   └── yt_dlp.py
+│   ├── bin/
+│   │   ├── ffmpeg.exe
+│   │   └── yt-dlp.exe
+│   ├── build.bat
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── data_models.py
+│   │   ├── downloader.py
+│   │   ├── session_manager.py
+│   │   ├── settings_manager.py
+│   │   └── transcriber.py
+│   ├── favicon.ico
+│   ├── main.py
+│   ├── resources/
+│   │   ├── __init__.py
+│   │   └── splash.py
+│   ├── ui/
+│   │   ├── __init__.py
+│   │   ├── components.py
+│   │   ├── dependency_downloader.py
+│   │   ├── main_window.py
+│   │   ├── panel_builder.py
+│   │   ├── progress_dialog.py
+│   │   └── styles.py
+│   ├── updater.py
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── bin_checker.py
+│   │   ├── lazy_imports.py
+│   │   ├── resource_loader.py
+│   │   └── url_validator.py
+│   └── whisper/
+│       ├── assets/
+│       │   ├── gpt2.tiktoken
+│       │   ├── mel_filters.npz
+│       │   └── multilingual.tiktoken
+│       └── base.pt
+└── tests/
+    ├── __init__.py
+    ├── test_downloader.py
+    ├── test_session_manager.py
+    ├── test_settings_manager.py
+    └── test_url_validator.py
 
 ```
 
