@@ -202,7 +202,7 @@ This project is licensed under the MIT License - see the [LICENSE](../LICENSE) f
 - 🔓 Security: [Repo Security](https://github.com/uikraft-hub/insta-downloader-gui/security)
 - ⛏ Pull Request: [Repo Pull Request](https://github.com/uikraft-hub/insta-downloader-gui/pulls)
 - 📖 Docs: [Repo Documentation](https://github.com/uikraft-hub/insta-downloader-gui/tree/main/docs)
-- 📃 Changelog: [Repo Changelog](https://github.com/uikraft-hub/insta-downloader-gui/docs/CHANGELOG.md)
+- 📃 Changelog: [Repo Changelog](https://github.com/uikraft-hub/insta-downloader-gui/blob/main/docs/CHANGELOG.md)
 ---
 
 ## 🔗 Connect
